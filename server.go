@@ -14,7 +14,7 @@ import (
 )
 
 const TEST_CALLBACK_URL = "https://localhost:8000/callback"
-const TEST_CLIENT_ID = "QCTETLPHG0YKXKFFDE0IKKVO2FKWZQ7Q"
+const TEST_CLIENT_ID = ""
 
 var (
 	port           = flag.Int("port", utils.DefaultServerPort(), "Port on which gRPC server should listen TCP conn.")
