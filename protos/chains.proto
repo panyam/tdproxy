@@ -1,0 +1,70 @@
+syntax = "proto3";
+import "google/protobuf/struct.proto";
+option go_package = "legfinder/tdproxy/protos";
+package protos;
+
+message Option {
+  string symbol = 1;
+  string date_string = 2;
+  string price_string = 3;
+  bool is_call = 4;
+  google.protobuf.Struct info = 5;
+}
+
+message Chain {
+  string symbol = 1;
+  string date = 2;
+  bool is_call = 3;
+  string last_refreshed_at = 4;
+  repeated Option options = 5;
+}
+
+service ChainService {
+  rpc GetChainInfo(GetChainInfoRequest) returns (GetChainInfoResponse) {}
+  rpc GetChain(GetChainRequest) returns (GetChainResponse) {}
+}
+
+message GetChainInfoRequest {
+  string symbol = 1;
+
+  /**
+   * MAX_INT effective means never refresh
+   * <= 0 => Always refresh
+   * Any other value indicates to only refresh if last refresh
+   * was before this threshold.
+   */
+  optional int32 refresh_type = 2;
+}
+
+message GetChainInfoResponse {
+  string symbol = 1;
+  repeated string dates = 2;
+  string last_refreshed_at = 3;
+}
+
+message GetChainRequest {
+  string symbol = 1;
+
+  /**
+   * Return the chain on a particular date.
+   */
+  string date = 2;
+
+  /**
+   * Get the call or put chain
+   */
+  bool is_call = 3;
+
+  /**
+   * MAX_INT effective means never refresh
+   * <= 0 => Always refresh
+   * Any other value indicates to only refresh if last refresh
+   * was before this threshold.
+   */
+  optional int32 refresh_type = 4;
+}
+
+message GetChainResponse {
+  optional string error_message = 1;
+  Chain chain = 2;
+}

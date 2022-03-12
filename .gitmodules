@@ -1,0 +1,3 @@
+[submodule "protos/pytdproxy"]
+	path = protos/pytdproxy
+	url = https://github.com/panyam/pytdproxy

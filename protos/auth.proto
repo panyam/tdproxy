@@ -1,0 +1,50 @@
+syntax = "proto3";
+option go_package = "legfinder/tdproxy/protos";
+package protos;
+
+service AuthService {
+  rpc AddAuthToken(AddAuthTokenRequest) returns (AddAuthTokenResponse) {}
+  rpc StartLogin(StartAuthRequest) returns (StartAuthResponse) {}
+  rpc CompleteLogin(CompleteAuthRequest) returns (CompleteAuthResponse) {}
+}
+
+message AuthToken {
+  string access_token = 1;
+  string scope = 2;
+  int32 expires_in = 3;
+  string token_type = 4;
+  string created_at = 5;
+  string last_fetched = 6;
+}
+
+message AddAuthTokenRequest {
+  string client_id = 1;
+  AuthToken value = 2;
+}
+
+message AddAuthTokenResponse {
+  bool status = 1;
+  optional string error_message = 2;
+}
+
+message StartAuthRequest {
+  string client_id = 1;
+  string callback_url = 2;
+  optional bool launch_url = 3;
+}
+
+message StartAuthResponse {
+  string continue_auth_url = 1;
+  optional string error_message = 2;
+}
+
+message CompleteAuthRequest {
+  string client_id = 1;
+  string callback_url = 2;
+  string code = 3;
+}
+
+message CompleteAuthResponse {
+  bool status = 1;
+  optional string error_message = 2;
+}

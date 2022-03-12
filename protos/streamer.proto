@@ -1,0 +1,53 @@
+syntax = "proto3";
+import "google/protobuf/struct.proto";
+option go_package = "legfinder/tdproxy/protos";
+package tdproxy_protos;
+
+message EmptyMessage {}
+
+/**
+ * The streaming servicefor listening to events from the server in a
+ * streaming fashion.
+ * The typical use case is:
+ *  client creates a subscription object.  This Subscription object
+ *  can be used to add or remove items to watch for.
+ *  
+ *  When the client is ready they can start listening on the subscription
+ *  when the server would send a stream of events/updates.
+ */
+service StreamerService {
+  rpc Subscribe(SubscribeRequest) returns (stream Message);
+  rpc Unsubscribe(Subscription) returns (EmptyMessage);
+  rpc Send(SendRequest) returns (SendResponse);
+}
+
+message Subscription {
+  string name = 1;
+}
+
+message SubscribeRequest {
+  /**
+   * Name to refer this subscription by.
+   */
+  string name = 1;
+
+  /** 
+   * Topic where all messages received in a subscription will be written to.
+   */
+  string topic_name = 2;
+}
+
+message SendRequest {
+  string sub_name = 1;
+  string service = 2;
+  string command = 3;
+  google.protobuf.Struct params = 4;
+}
+
+message SendResponse {
+  int64 status = 1;
+}
+
+message Message {
+  google.protobuf.Struct info = 1;
+}
