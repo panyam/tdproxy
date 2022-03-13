@@ -11,16 +11,11 @@ brew install golang
 
 ### Install python (for python bindings)
 
-#### Create and active virtual env
+#### Virtual Env and Requirements
 
 ```
 python3 -m venv env
 source env/bin/activate
-```
-
-#### Install Requirements
-
-```
 pip install -r dev_requirements
 ```
 
