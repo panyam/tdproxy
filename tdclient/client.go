@@ -1,6 +1,7 @@
 package tdclient
 
 import (
+	"errors"
 	"fmt"
 	"legfinder/tdproxy/db"
 	"legfinder/tdproxy/models"
@@ -12,6 +13,8 @@ import (
 	"strings"
 	"time"
 )
+
+var NotAuthenticated = errors.New("Please call StartLogin first")
 
 type Client struct {
 	RootDir              string
@@ -125,6 +128,9 @@ func (td *Client) GetChain(symbol string, date string, is_call bool, refresh_typ
 }
 
 func (td *Client) FetchTickers(symbols []string) (map[string]*models.Ticker, error) {
+	if td.Auth == nil {
+		return nil, NotAuthenticated
+	}
 	tickers := make(map[string]*models.Ticker)
 	var tail []string
 	for len(symbols) > 0 {
@@ -157,6 +163,9 @@ func (td *Client) FetchTickers(symbols []string) (map[string]*models.Ticker, err
 }
 
 func (td *Client) FetchChain(symbol string, date string, is_call bool) error {
+	if td.Auth == nil {
+		return NotAuthenticated
+	}
 	log.Printf("Loading chain data from server for %s...", symbol)
 	url := fmt.Sprintf("%s?apikey=%s&symbol=%s", TDAMT_OPT_CHAIN_URL, td.Auth.ClientId, symbol)
 	result, _, err := utils.JsonGet(url, func(req *http.Request) {
