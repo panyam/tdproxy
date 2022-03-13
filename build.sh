@@ -25,6 +25,8 @@ python3 -m grpc_tools.protoc -I./protos   \
       protos/$PYPKGNAME/chains.proto \
       protos/$PYPKGNAME/streamer.proto \
       protos/$PYPKGNAME/tickers.proto
-rm protos/$PYPKGNAME/*.proto
 mv protos/$PYPKGNAME/$PYPKGNAME/* $PY_OUT_DIR/src/$PYPKGNAME
 touch $PY_OUT_DIR/src/$PYPKGNAME/__init__.py
+# Cleanup files
+rm protos/$PYPKGNAME/*.proto
+rm -Rf protos/$PYPKGNAME/$PYPKGNAME/
