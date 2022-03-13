@@ -25,9 +25,9 @@ var (
 	client_id      = flag.String("client_id", TEST_CLIENT_ID, "TD Ameritrade Client ID")
 	callback_port  = flag.Int("callback_port", utils.DefaultCallbackPort(), "Port on which OAuth Callback handler listen on.")
 	callback_url   = flag.String("callback_url", TEST_CALLBACK_URL, "TD Ameritrade Auth Callback URl")
-	callback_cert  = flag.String("callback_cert", "./td/server.crt", "Certificate file for SSL Callback handler")
-	callback_pkey  = flag.String("callback_pkey", "./td/server.key", "Private key file for SSL Callback handler")
-	topic_endpoint = flag.String("topic_endpoint", pslutils.DefaultServerAddress(), "End point where topics can be published and subscribed to")
+	callback_cert  = flag.String("callback_cert", "./tdclient/server.crt", "Certificate file for SSL Callback handler")
+	callback_pkey  = flag.String("callback_pkey", "./tdclient/server.key", "Private key file for SSL Callback handler")
+	topic_endpoint = flag.String("topic_endpoint", fmt.Sprintf("%d", pslutils.DefaultServerPort()), "End point where topics can be published and subscribed to")
 	topics_folder  = flag.String("topics_folder", "~/.tdroot/topics", "End point where topics can be published and subscribed to")
 )
 

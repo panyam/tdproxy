@@ -26,7 +26,6 @@ func JsonToQueryString(json StringMap) string {
 func JsonGet(url string, onReq func(req *http.Request)) (interface{}, *http.Response, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		log.Fatalln(err)
 		return nil, nil, err
 	}
 	if onReq != nil {
@@ -35,7 +34,7 @@ func JsonGet(url string, onReq func(req *http.Request)) (interface{}, *http.Resp
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatalln(err)
+		log.Println("Json Get Error: ", url, err)
 		return nil, resp, err
 	}
 	defer resp.Body.Close()
@@ -57,7 +56,7 @@ func JsonDecodeBytes(bytes []byte) (interface{}, error) {
 	var output interface{} = nil
 	err := json.Unmarshal(bytes, &output)
 	if err != nil {
-		log.Fatal(err)
+		log.Println("Json DecodeBytes Error: ", err, string(bytes))
 	}
 	return output, err
 }
@@ -69,14 +68,14 @@ func JsonDecodeStr(str string) (interface{}, error) {
 func JsonDecodeFile(path string) (interface{}, error) {
 	contents, err := os.ReadFile(path)
 	if err != nil {
-		log.Fatal(err)
+		log.Println("ReadFile Error: ", path, err)
 		return nil, err
 	}
 	decoder := json.NewDecoder(strings.NewReader(string(contents)))
 	var json_data map[string]interface{}
 	err = decoder.Decode(&json_data)
 	if err != nil {
-		log.Fatal("Invalid error decoding json: ", err)
+		log.Println("Invalid error decoding json: ", err, string(contents))
 	}
 	return json_data, err
 }

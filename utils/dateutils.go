@@ -17,7 +17,7 @@ func NeedsRefresh(refresh_type int32, last_refreshed_at time.Time, now time.Time
 		return true
 	}
 	diff := now.Sub(last_refreshed_at)
-	td := time.Duration(int64(refresh_type) * 1000000000)
+	td := time.Duration(refresh_type) * time.Second
 	needsit := diff > td
 	if needsit {
 		log.Println("Diff: ", diff, "RT: ", refresh_type, "TD: ", td, "LastRef: ", last_refreshed_at, "Now: ", now)

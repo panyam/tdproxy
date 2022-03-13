@@ -80,7 +80,7 @@ func (s *Socket) SendRequest(req utils.StringMap) bool {
 }
 
 func (s *Socket) UserPrincipals() (utils.StringMap, error) {
-	return s.TDClient.UserPrincipals()
+	return s.TDClient.Auth.UserPrincipals()
 }
 
 /**
@@ -89,14 +89,14 @@ func (s *Socket) UserPrincipals() (utils.StringMap, error) {
  * will try to refresh any tokens if required before failing on errors.
  */
 func (s *Socket) Credentials() (utils.StringMap, error) {
-	return s.TDClient.StreamingCredentials()
+	return s.TDClient.Auth.StreamingCredentials()
 }
 
 /**
  * Returns the WS connection URL.
  */
 func (s *Socket) WSUrl() (*url.URL, error) {
-	return s.TDClient.WSUrl()
+	return s.TDClient.Auth.WSUrl()
 }
 
 /**
@@ -273,7 +273,7 @@ func (s *Socket) start_writer() error {
  * Get the login command payload.
  */
 func (s *Socket) LoginCommand() (utils.StringMap, error) {
-	userPrincipals, err := s.TDClient.UserPrincipals()
+	userPrincipals, err := s.TDClient.Auth.UserPrincipals()
 	if err != nil {
 		return nil, err
 	}

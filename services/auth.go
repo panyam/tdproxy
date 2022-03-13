@@ -7,6 +7,7 @@ import (
 	"legfinder/tdproxy/protos"
 	"legfinder/tdproxy/tdclient"
 	"legfinder/tdproxy/utils"
+	"log"
 )
 
 type AuthService struct {
@@ -19,7 +20,9 @@ func (s *AuthService) AddAuthToken(ctx context.Context, request *protos.AddAuthT
 }
 
 func (s *AuthService) StartLogin(ctx context.Context, request *protos.StartAuthRequest) (*protos.StartAuthResponse, error) {
-	url := s.TDClient.StartAuthUrlFor(request.ClientId, request.CallbackUrl)
+	s.TDClient.Auth = tdclient.NewAuth(s.TDClient.RootDir, request.ClientId, request.CallbackUrl)
+	url := s.TDClient.Auth.StartAuthUrl()
+	log.Println("StartAuthUrl: ", url)
 	if request.LaunchUrl != nil && *request.LaunchUrl {
 		utils.OpenBrowser(url)
 	}
@@ -27,9 +30,8 @@ func (s *AuthService) StartLogin(ctx context.Context, request *protos.StartAuthR
 }
 
 func (s *AuthService) CompleteLogin(ctx context.Context, request *protos.CompleteAuthRequest) (*protos.CompleteAuthResponse, error) {
-	s.TDClient.ClientId = request.ClientId
-	s.TDClient.CallbackUrl = request.CallbackUrl
-	_, err := s.TDClient.CompleteAuth(request.Code)
+	log.Println("ClientId, CUrl: ", s.TDClient.Auth.ClientId, s.TDClient.Auth.CallbackUrl)
+	_, err := s.TDClient.Auth.CompleteAuth(request.Code)
 	if err != nil {
 		return nil, err
 	}

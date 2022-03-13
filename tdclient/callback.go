@@ -10,24 +10,24 @@ import (
 type CallbackHandler struct {
 	Port     int
 	TDClient *Client
-	CertFile string `default:"./td/server.crt"`
-	PKeyFile string `default:"./td/server.key"`
+	CertFile string `default:"./tdclient/server.crt"`
+	PKeyFile string `default:"./tdclient/server.key"`
 }
 
 func NewCallbackHandler(TDClient *Client, port int, cert_file string, pkey_file string) *CallbackHandler {
 	return &CallbackHandler{TDClient: TDClient, Port: port, CertFile: cert_file, PKeyFile: pkey_file}
 }
 
-func (c *CallbackHandler) Start() error {
+func (c *CallbackHandler) Start() (err error) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		// log.Printf("URL: %s", req.URL)
-		// log.Printf("Query: %s", req.URL.Query())
+		log.Printf("URL: %s", req.URL)
+		log.Printf("Query: %s", req.URL.Query())
 		code := req.URL.Query().Get("code")
 		log.Printf("Code: %s", code)
-		resp, err := c.TDClient.CompleteAuth(code)
+		resp, err := c.TDClient.Auth.CompleteAuth(code)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			log.Println(err)
+			log.Println("CompleteAuthError: ", err)
 		} else {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
@@ -39,5 +39,8 @@ func (c *CallbackHandler) Start() error {
 	log.Printf("Callback Handler Certificate file: %s\n", c.CertFile)
 	log.Printf("Callback Handler Private key file: %s\n", c.PKeyFile)
 	log.Printf("Running callback handler on part %d", c.Port)
-	return http.ListenAndServeTLS(fmt.Sprintf(":%d", c.Port), c.CertFile, c.PKeyFile, nil)
+	if err = http.ListenAndServeTLS(fmt.Sprintf(":%d", c.Port), c.CertFile, c.PKeyFile, nil); err != nil {
+		log.Fatal("Cannot start HTTPS callback handler: ", err)
+	}
+	return err
 }
