@@ -3,14 +3,17 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/panyam/pslite/cli"
 	pslutils "github.com/panyam/pslite/utils"
 	"google.golang.org/grpc"
 	"legfinder/tdproxy/protos"
 	svc "legfinder/tdproxy/services"
-	"legfinder/tdproxy/td"
+	"legfinder/tdproxy/tdclient"
 	"legfinder/tdproxy/utils"
 	"log"
 	"net"
+	"strconv"
+	"strings"
 )
 
 const TEST_CALLBACK_URL = "https://localhost:8000/callback"
@@ -28,15 +31,33 @@ var (
 	topics_folder  = flag.String("topics_folder", "~/.tdroot/topics", "End point where topics can be published and subscribed to")
 )
 
-func main() {
-	flag.Parse()
-	grpcServer := grpc.NewServer()
-	pubsub, err := pslutils.NewPubSub(*topic_endpoint)
+func createPubsubClient() *cli.PubSub {
+	pubsub, err := cli.NewPubSub(*topic_endpoint)
 	if err != nil {
 		log.Fatal(err)
 	}
-	tdinfo := td.NewClient(utils.ExpandUserPath(*tdroot), *client_id, *callback_url)
-	callbackHandler := td.NewCallbackHandler(tdinfo,
+	if strings.Index(*topic_endpoint, ":") < 0 {
+		// Start us locally on the given port
+		topicport, err := strconv.ParseInt(*topic_endpoint, 10, 64)
+		if err != nil {
+			log.Fatal(fmt.Errorf("Invalid topic_endpoint port: %s", *topic_endpoint))
+		}
+		log.Printf("Serving pubsub topics on %d - %s", topicport, *topics_folder)
+		go cli.PSLServe(int(topicport), *topics_folder)
+	}
+	if err != nil {
+		log.Fatal(err)
+	}
+	return pubsub
+}
+
+func main() {
+	flag.Parse()
+	grpcServer := grpc.NewServer()
+	// see if we need to start the pubsub endpoint locally
+	pubsub := createPubsubClient()
+	tdinfo := tdclient.NewClient(utils.ExpandUserPath(*tdroot), *client_id, *callback_url)
+	callbackHandler := tdclient.NewCallbackHandler(tdinfo,
 		*callback_port,
 		*callback_cert,
 		*callback_pkey)
@@ -48,7 +69,7 @@ func main() {
 	streamer_svc := svc.NewStreamerService(tdinfo, pubsub)
 	streamer_svc.TopicsFolder = *topics_folder
 	protos.RegisterStreamerServiceServer(grpcServer, streamer_svc)
-	log.Printf("Initializing gRPC server on port %d", *port)
+	log.Printf("Initializing TDProxy gRPC server on port %d", *port)
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)

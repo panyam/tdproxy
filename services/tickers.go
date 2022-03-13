@@ -5,13 +5,13 @@ import (
 	// "fmt"
 	structpb "google.golang.org/protobuf/types/known/structpb"
 	"legfinder/tdproxy/protos"
-	"legfinder/tdproxy/td"
+	"legfinder/tdproxy/tdclient"
 	"legfinder/tdproxy/utils"
 )
 
 type TickerService struct {
 	protos.UnimplementedTickerServiceServer
-	TDClient *td.Client
+	TDClient *tdclient.Client
 }
 
 func (s *TickerService) GetTickers(ctx context.Context, request *protos.GetTickersRequest) (*protos.GetTickersResponse, error) {

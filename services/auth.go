@@ -5,13 +5,13 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"legfinder/tdproxy/protos"
-	"legfinder/tdproxy/td"
+	"legfinder/tdproxy/tdclient"
 	"legfinder/tdproxy/utils"
 )
 
 type AuthService struct {
 	protos.UnimplementedAuthServiceServer
-	TDClient *td.Client
+	TDClient *tdclient.Client
 }
 
 func (s *AuthService) AddAuthToken(ctx context.Context, request *protos.AddAuthTokenRequest) (*protos.AddAuthTokenResponse, error) {

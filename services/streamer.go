@@ -4,26 +4,26 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	pslutils "github.com/panyam/pslite/utils"
+	pslcli "github.com/panyam/pslite/cli"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	structpb "google.golang.org/protobuf/types/known/structpb"
 	"legfinder/tdproxy/protos"
-	"legfinder/tdproxy/td"
+	"legfinder/tdproxy/tdclient"
 	"legfinder/tdproxy/utils"
 	"log"
 )
 
 type StreamerService struct {
 	protos.UnimplementedStreamerServiceServer
-	TDClient     *td.Client
+	TDClient     *tdclient.Client
 	TopicsFolder string
 	topics       map[string]bool
 	subs         map[string]*Subscription
-	pubsub       *pslutils.PubSub
+	pubsub       *pslcli.PubSub
 }
 
-func NewStreamerService(TDClient *td.Client, pubsub *pslutils.PubSub) *StreamerService {
+func NewStreamerService(TDClient *tdclient.Client, pubsub *pslcli.PubSub) *StreamerService {
 	out := StreamerService{
 		TDClient:     TDClient,
 		pubsub:       pubsub,
@@ -48,7 +48,7 @@ func (s *StreamerService) EnsureTopic(topic_name string) (bool, error) {
 	return true, nil
 }
 
-func (s *StreamerService) Subscribe(subreq *protos.SubscribeRequest, stream protos.StreamerService_SubscribeServer) error {
+func (s *StreamerService) Subscribe(subreq *protos.SubscribeRequest, stream protos.StreamerService_SubscribeServer) (err error) {
 	topic_exists, err := s.EnsureTopic(subreq.TopicName)
 	if err != nil {
 		return err
@@ -57,50 +57,37 @@ func (s *StreamerService) Subscribe(subreq *protos.SubscribeRequest, stream prot
 	if sub, ok := s.subs[name]; ok {
 		// Already exists and a client is listening to it so return error
 		// return status.Error(codes.AlreadyExists, fmt.Sprintf("Subscription (%s) already running", name))
-		log.Printf("Subscriptiong %s already connected.  Disconnecting", name)
-		sub.Socket.Disconnect()
+		sub.Disconnect()
 	}
-	newSocket := td.NewSocket(s.TDClient, nil)
-	sub := NewSubscription(name, newSocket)
+	sub := NewSubscription(name, tdclient.NewSocket(s.TDClient, nil))
 	s.subs[name] = sub
-	go sub.Socket.Connect()
+	go sub.Connect()
+	defer delete(s.subs, name)
 
 	// Now read from the channel that was created and pump it out to our topic
-	for {
-		newMessage := <-sub.Socket.ReaderChannel()
-		if newMessage == nil {
+	closed := false
+	ok := true
+	for !closed {
+		select {
+		case <-stream.Context().Done():
+			closed = true
 			break
-		}
-		info, err := structpb.NewStruct(newMessage)
-		if err != nil {
-			return err
-		}
-		if topic_exists {
-			pubmsg, err := json.Marshal(newMessage)
-			if err != nil {
-				log.Println("Error encoding json: ", err)
-			} else {
-				if err := s.pubsub.Publish(subreq.TopicName, pubmsg); err != nil {
-					log.Printf("Error publishing message to topic (%s): %v - %v", subreq.TopicName, err, info)
-					return err
+		case newMessage := <-sub.Socket.ReaderChannel():
+			if newMessage == nil {
+				break
+			}
+			if topic_exists {
+				if ok, err = s.publishToTopic(newMessage, subreq.TopicName); !ok || err != nil {
+					break
 				}
 			}
-		}
-		msgproto := protos.Message{Info: info}
-		if err := stream.Send(&msgproto); err != nil {
-			log.Printf("%v.Send(%v) = %v", stream, &msgproto, err)
-			return err
+			if ok, err = s.sendToClient(newMessage, stream); !ok || err != nil {
+				break
+			}
+			break
 		}
 	}
-	delete(s.subs, name)
-	/*
-		reply, err := stream.CloseAndRecv()
-		if err != nil {
-			log.Printf("%v.CloseAndRecv() got error %v, want %v", stream, err, nil)
-			return err
-		}
-	*/
-	return nil
+	return
 }
 
 func (s *StreamerService) Unsubscribe(ctx context.Context, sub *protos.Subscription) (*protos.EmptyMessage, error) {
@@ -134,4 +121,33 @@ func (s *StreamerService) Send(ctx context.Context, request *protos.SendRequest)
 	} else {
 		return nil, status.Error(codes.PermissionDenied, "Could not send request")
 	}
+}
+
+func (s *StreamerService) publishToTopic(newMessage utils.StringMap, topic_name string) (bool, error) {
+	pubmsg, err := json.Marshal(newMessage)
+	if err != nil {
+		log.Println("Error encoding json: ", err)
+	} else {
+		err = s.pubsub.Publish(topic_name, pubmsg)
+		if err != nil {
+			log.Printf("Error publishing message to topic (%s): %v - %v", topic_name, err, pubmsg)
+		}
+	}
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (s *StreamerService) sendToClient(newMessage utils.StringMap, stream protos.StreamerService_SubscribeServer) (bool, error) {
+	info, err := structpb.NewStruct(newMessage)
+	if err != nil {
+		return false, err
+	}
+	msgproto := protos.Message{Info: info}
+	if err := stream.Send(&msgproto); err != nil {
+		log.Printf("%v.Send(%v) = %v", stream, &msgproto, err)
+		return false, err
+	}
+	return true, err
 }

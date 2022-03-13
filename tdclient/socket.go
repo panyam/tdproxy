@@ -1,4 +1,4 @@
-package td
+package tdclient
 
 import (
 	"fmt"

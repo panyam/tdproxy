@@ -4,14 +4,14 @@ import (
 	"context"
 	structpb "google.golang.org/protobuf/types/known/structpb"
 	"legfinder/tdproxy/protos"
-	"legfinder/tdproxy/td"
+	"legfinder/tdproxy/tdclient"
 	"legfinder/tdproxy/utils"
 	"log"
 )
 
 type ChainService struct {
 	protos.UnimplementedChainServiceServer
-	TDClient *td.Client
+	TDClient *tdclient.Client
 }
 
 func (s *ChainService) GetChainInfo(ctx context.Context, request *protos.GetChainInfoRequest) (*protos.GetChainInfoResponse, error) {
