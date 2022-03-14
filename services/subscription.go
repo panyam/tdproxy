@@ -35,6 +35,10 @@ func (sub *Subscription) Disconnect() {
 /**
  * Starts a connection on the socket so that messages can be read and written.
  */
-func (sub *Subscription) Connect() {
-	sub.Socket.Connect()
+func (sub *Subscription) StartConnection() error {
+	return sub.Socket.StartConnection()
+}
+
+func (sub *Subscription) Wait() {
+	sub.Socket.WaitForFinish()
 }

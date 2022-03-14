@@ -80,6 +80,9 @@ func (s *Socket) SendRequest(req utils.StringMap) bool {
 }
 
 func (s *Socket) UserPrincipals() (utils.StringMap, error) {
+	if s.TDClient.Auth == nil {
+		return nil, NotAuthenticated
+	}
 	return s.TDClient.Auth.UserPrincipals()
 }
 
@@ -89,6 +92,9 @@ func (s *Socket) UserPrincipals() (utils.StringMap, error) {
  * will try to refresh any tokens if required before failing on errors.
  */
 func (s *Socket) Credentials() (utils.StringMap, error) {
+	if s.TDClient.Auth == nil {
+		return nil, NotAuthenticated
+	}
 	return s.TDClient.Auth.StreamingCredentials()
 }
 
@@ -96,6 +102,9 @@ func (s *Socket) Credentials() (utils.StringMap, error) {
  * Returns the WS connection URL.
  */
 func (s *Socket) WSUrl() (*url.URL, error) {
+	if s.TDClient.Auth == nil {
+		return nil, NotAuthenticated
+	}
 	return s.TDClient.Auth.WSUrl()
 }
 
@@ -159,7 +168,17 @@ func (s *Socket) Disconnect() error {
 	return nil
 }
 
-func (s *Socket) Connect() error {
+/**
+ * Starts the connection to the server allowing sending and receiving of messages
+ * to/from the server.
+ *
+ * This method will start the reader and writer go-routines and return immediately
+ * if no errors are encountered.
+ *
+ * It is the user's responsibility to call the WaitForFinish method to ensure
+ * no premature exits.
+ */
+func (s *Socket) StartConnection() error {
 	if s.IsRunning() {
 		// already running do nothing
 		return nil
@@ -179,10 +198,16 @@ func (s *Socket) Connect() error {
 	// Start the writer and readers
 	go s.start_reader()
 	go s.start_writer()
+	return nil
+}
+
+/**
+ * Waits until the socket connection is disconnected or manually stopped.
+ */
+func (s *Socket) WaitForFinish() {
 	s.waitGroup.Wait()
 	s.is_running = false
 	s.wsConn = nil
-	return nil
 }
 
 func (s *Socket) start_reader() error {
@@ -242,12 +267,12 @@ func (s *Socket) start_writer() error {
 		case newRequest := <-s.requestsChannel:
 			s.wsConn.SetWriteDeadline(time.Now().Add(s.writeWaitTime))
 			// Here we send a request to the server
-			log.Println("Sending Request: ", newRequest)
 			err := s.wsConn.WriteJSON(newRequest)
 			if err != nil {
-				log.Println("Error sending message: ", err)
+				log.Println("Error sending request: ", newRequest, err)
 				return err
 			}
+			log.Println("Successfully Sent Request: ", newRequest)
 			break
 		case controlRequest := <-s.controlChannel:
 			// For now only a "kill" can be sent here

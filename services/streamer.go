@@ -61,8 +61,10 @@ func (s *StreamerService) Subscribe(subreq *protos.SubscribeRequest, stream prot
 	}
 	sub := NewSubscription(name, tdclient.NewSocket(s.TDClient, nil))
 	s.subs[name] = sub
-	go sub.Connect()
 	defer delete(s.subs, name)
+	if err = sub.StartConnection(); err != nil {
+		return err
+	}
 
 	// Now read from the channel that was created and pump it out to our topic
 	closed := false
@@ -87,6 +89,7 @@ func (s *StreamerService) Subscribe(subreq *protos.SubscribeRequest, stream prot
 			break
 		}
 	}
+	sub.Wait()
 	return
 }
 
@@ -100,27 +103,31 @@ func (s *StreamerService) Unsubscribe(ctx context.Context, sub *protos.Subscript
 	return &protos.EmptyMessage{}, nil
 }
 
-func (s *StreamerService) Send(ctx context.Context, request *protos.SendRequest) (*protos.SendResponse, error) {
+func (s *StreamerService) Send(ctx context.Context, request *protos.SendRequest) (resp *protos.SendResponse, err error) {
 	log.Println("Received SendRequest: ", request)
+	defer log.Println("Processed SendRequest, err: ", err)
 	name := request.SubName
 	sub, ok := s.subs[name]
 	if !ok {
-		return nil, status.Error(codes.NotFound, fmt.Sprintf("Cannot find subscription: %s", name))
+		err = status.Error(codes.NotFound, fmt.Sprintf("Cannot find subscription: %s", name))
+		return
 	}
-	newReq, err := sub.Socket.NewRequest(request.Service, request.Command, true, func(reqparams utils.StringMap) {
+	var newReq utils.StringMap
+	newReq, err = sub.Socket.NewRequest(request.Service, request.Command, true, func(reqparams utils.StringMap) {
 		for k, v := range request.Params.AsMap() {
 			reqparams[k] = v
 		}
 	})
 	if err != nil {
-		return nil, err
+		return
 	}
 	result := sub.Socket.SendRequest(newReq)
 	if result {
-		return &protos.SendResponse{}, nil
+		resp = &protos.SendResponse{}
 	} else {
-		return nil, status.Error(codes.PermissionDenied, "Could not send request")
+		err = status.Error(codes.PermissionDenied, "Could not send request")
 	}
+	return
 }
 
 func (s *StreamerService) publishToTopic(newMessage utils.StringMap, topic_name string) (bool, error) {
