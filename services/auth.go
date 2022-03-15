@@ -2,17 +2,18 @@ package services
 
 import (
 	"context"
+	"github.com/panyam/goutils/utils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"legfinder/tdproxy/protos"
 	"legfinder/tdproxy/tdclient"
-	"legfinder/tdproxy/utils"
 	"log"
 )
 
 type AuthService struct {
 	protos.UnimplementedAuthServiceServer
-	TDClient *tdclient.Client
+	TDClient  *tdclient.Client
+	AuthStore *tdclient.AuthStore
 }
 
 func (s *AuthService) AddAuthToken(ctx context.Context, request *protos.AddAuthTokenRequest) (*protos.AddAuthTokenResponse, error) {
@@ -20,7 +21,7 @@ func (s *AuthService) AddAuthToken(ctx context.Context, request *protos.AddAuthT
 }
 
 func (s *AuthService) StartLogin(ctx context.Context, request *protos.StartAuthRequest) (*protos.StartAuthResponse, error) {
-	s.TDClient.Auth = tdclient.NewAuth(s.TDClient.RootDir, request.ClientId, request.CallbackUrl)
+	s.TDClient.Auth = s.AuthStore.EnsureAuth(request.ClientId, request.CallbackUrl)
 	url := s.TDClient.Auth.StartAuthUrl()
 	log.Println("StartAuthUrl: ", url)
 	if request.LaunchUrl != nil && *request.LaunchUrl {
@@ -31,9 +32,11 @@ func (s *AuthService) StartLogin(ctx context.Context, request *protos.StartAuthR
 
 func (s *AuthService) CompleteLogin(ctx context.Context, request *protos.CompleteAuthRequest) (*protos.CompleteAuthResponse, error) {
 	log.Println("ClientId, CUrl: ", s.TDClient.Auth.ClientId, s.TDClient.Auth.CallbackUrl)
-	_, err := s.TDClient.Auth.CompleteAuth(request.Code)
+	err := s.TDClient.Auth.CompleteAuth(request.Code)
 	if err != nil {
+		log.Println("Error completing auth: ", err)
 		return nil, err
 	}
+	s.AuthStore.SaveTokens()
 	return &protos.CompleteAuthResponse{Status: true}, nil
 }

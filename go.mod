@@ -4,8 +4,8 @@ go 1.17
 
 require (
 	github.com/gorilla/websocket v1.5.0
-	github.com/panyam/goutils v0.0.2
-	github.com/panyam/pslite v0.0.15
+	github.com/panyam/goutils v0.0.4
+	github.com/panyam/pslite v0.0.18
 	github.com/stretchr/testify v1.7.0
 	google.golang.org/grpc v1.44.0
 	google.golang.org/protobuf v1.27.1

@@ -1,4 +1,4 @@
-package utils
+package config
 
 func DefaultServerPort() int {
 	return 9111

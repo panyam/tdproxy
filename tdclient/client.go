@@ -3,9 +3,9 @@ package tdclient
 import (
 	"errors"
 	"fmt"
+	"github.com/panyam/goutils/utils"
 	"legfinder/tdproxy/db"
 	"legfinder/tdproxy/models"
-	"legfinder/tdproxy/utils"
 	"log"
 	"net/http"
 	"os"
@@ -15,6 +15,7 @@ import (
 )
 
 var NotAuthenticated = errors.New("Please call StartLogin first")
+var InvalidChainJson = errors.New("Invalid chain json dictionary")
 
 type Client struct {
 	RootDir              string
@@ -29,17 +30,13 @@ const (
 	TDAMT_OPT_TICKER_URL = "https://api.tdameritrade.com/v1/marketdata/quotes"
 )
 
-func NewClient(rootdir string, client_id string, callback_url string) *Client {
+func NewClient(rootdir string) *Client {
 	fmt.Println("Client Root Dir: ", rootdir)
 	out := &Client{RootDir: rootdir}
 	os.MkdirAll(rootdir, 0777)
 	out.db = db.NewDB(path.Join(rootdir, "quotedb"))
 	out.DefaultTickerRefresh = 1800
 	out.DefaultChainRefresh = 1800
-
-	if client_id != "" && callback_url != "" {
-		out.Auth = NewAuth(rootdir, client_id, callback_url)
-	}
 	return out
 }
 
@@ -128,7 +125,7 @@ func (td *Client) GetChain(symbol string, date string, is_call bool, refresh_typ
 }
 
 func (td *Client) FetchTickers(symbols []string) (map[string]*models.Ticker, error) {
-	if td.Auth == nil {
+	if td.Auth == nil || !td.Auth.IsAuthenticated() {
 		return nil, NotAuthenticated
 	}
 	tickers := make(map[string]*models.Ticker)
@@ -163,7 +160,7 @@ func (td *Client) FetchTickers(symbols []string) (map[string]*models.Ticker, err
 }
 
 func (td *Client) FetchChain(symbol string, date string, is_call bool) error {
-	if td.Auth == nil {
+	if td.Auth == nil || !td.Auth.IsAuthenticated() {
 		return NotAuthenticated
 	}
 	log.Printf("Loading chain data from server for %s...", symbol)
@@ -174,7 +171,10 @@ func (td *Client) FetchChain(symbol string, date string, is_call bool) error {
 	if err != nil {
 		return err
 	}
-	calls, puts := group_chains_by_date(result.(utils.StringMap), time.Now().UTC())
+	calls, puts, err := group_chains_by_date(result.(utils.StringMap), time.Now().UTC())
+	if err != nil {
+		return err
+	}
 	for _, entry := range calls {
 		td.db.SaveChain(entry)
 	}
@@ -198,11 +198,15 @@ func extract_chains_by_date(chains_by_date utils.StringMap, symbol string, is_ca
 
 func group_chains_by_date(chain_json utils.StringMap, refreshed_at time.Time) (
 	map[string]*models.Chain,
-	map[string]*models.Chain) {
+	map[string]*models.Chain,
+	error) {
+	if chain_json["symbol"] == nil {
+		return nil, nil, InvalidChainJson
+	}
 	ticker := chain_json["symbol"].(string)
 	put_exp_date_map := chain_json["putExpDateMap"].(utils.StringMap)
 	call_exp_date_map := chain_json["callExpDateMap"].(utils.StringMap)
 	calls := extract_chains_by_date(call_exp_date_map, ticker, true, refreshed_at)
 	puts := extract_chains_by_date(put_exp_date_map, ticker, false, refreshed_at)
-	return calls, puts
+	return calls, puts, nil
 }

@@ -3,7 +3,7 @@ package tdclient
 import (
 	"fmt"
 	"github.com/gorilla/websocket"
-	"legfinder/tdproxy/utils"
+	"github.com/panyam/goutils/utils"
 	"log"
 	"net/url"
 	"sync"

@@ -3,13 +3,14 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/panyam/goutils/utils"
 	"github.com/panyam/pslite/cli"
-	pslutils "github.com/panyam/pslite/utils"
+	pslconfig "github.com/panyam/pslite/config"
 	"google.golang.org/grpc"
+	"legfinder/tdproxy/config"
 	"legfinder/tdproxy/protos"
 	svc "legfinder/tdproxy/services"
 	"legfinder/tdproxy/tdclient"
-	"legfinder/tdproxy/utils"
 	"log"
 	"net"
 	"strconv"
@@ -20,14 +21,14 @@ const TEST_CALLBACK_URL = "https://localhost:8000/callback"
 const TEST_CLIENT_ID = ""
 
 var (
-	port           = flag.Int("port", utils.DefaultServerPort(), "Port on which gRPC server should listen TCP conn.")
+	port           = flag.Int("port", config.DefaultServerPort(), "Port on which gRPC server should listen TCP conn.")
 	tdroot         = flag.String("tdroot", "~/.tdroot", "Root location of where TD data is downloaded too")
 	client_id      = flag.String("client_id", TEST_CLIENT_ID, "TD Ameritrade Client ID")
-	callback_port  = flag.Int("callback_port", utils.DefaultCallbackPort(), "Port on which OAuth Callback handler listen on.")
+	callback_port  = flag.Int("callback_port", config.DefaultCallbackPort(), "Port on which OAuth Callback handler listen on.")
 	callback_url   = flag.String("callback_url", TEST_CALLBACK_URL, "TD Ameritrade Auth Callback URl")
 	callback_cert  = flag.String("callback_cert", "./tdclient/server.crt", "Certificate file for SSL Callback handler")
 	callback_pkey  = flag.String("callback_pkey", "./tdclient/server.key", "Private key file for SSL Callback handler")
-	topic_endpoint = flag.String("topic_endpoint", fmt.Sprintf("%d", pslutils.DefaultServerPort()), "End point where topics can be published and subscribed to")
+	topic_endpoint = flag.String("topic_endpoint", fmt.Sprintf("%d", pslconfig.DefaultServerPort()), "End point where topics can be published and subscribed to")
 	topics_folder  = flag.String("topics_folder", "~/.tdroot/topics", "End point where topics can be published and subscribed to")
 )
 
@@ -56,15 +57,24 @@ func main() {
 	grpcServer := grpc.NewServer()
 	// see if we need to start the pubsub endpoint locally
 	pubsub := createPubsubClient()
-	tdinfo := tdclient.NewClient(utils.ExpandUserPath(*tdroot), *client_id, *callback_url)
+	auth_store := tdclient.NewAuthStore(utils.ExpandUserPath(*tdroot))
+	if *client_id != "" && *callback_url != "" {
+		auth_store.EnsureAuth(*client_id, *callback_url)
+	}
+	tdinfo := tdclient.NewClient(utils.ExpandUserPath(*tdroot))
+	tdinfo.Auth = auth_store.LastAuth()
 	callbackHandler := tdclient.NewCallbackHandler(tdinfo,
+		auth_store,
 		*callback_port,
 		*callback_cert,
 		*callback_pkey)
 	go callbackHandler.Start()
+
 	protos.RegisterTickerServiceServer(grpcServer, &svc.TickerService{TDClient: tdinfo})
-	protos.RegisterAuthServiceServer(grpcServer, &svc.AuthService{TDClient: tdinfo})
 	protos.RegisterChainServiceServer(grpcServer, &svc.ChainService{TDClient: tdinfo})
+
+	auth_svc := &svc.AuthService{TDClient: tdinfo, AuthStore: auth_store}
+	protos.RegisterAuthServiceServer(grpcServer, auth_svc)
 
 	streamer_svc := svc.NewStreamerService(tdinfo, pubsub)
 	streamer_svc.TopicsFolder = *topics_folder
