@@ -76,7 +76,6 @@ func (db *QuoteDB) ChainInfoPathForSymbol(symbol string, ensure bool) (string, e
 	if err == nil {
 		_, err = os.Stat(out)
 	}
-	log.Println("Info Path for: ", symbol, out)
 	return out, err
 }
 
