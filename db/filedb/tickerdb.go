@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/panyam/goutils/utils"
-	"legfinder/tdproxy/models"
 	"log"
 	"os"
 	"path"
 	"path/filepath"
+	"tdproxy/models"
 	"time"
 )
 

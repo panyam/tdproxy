@@ -5,8 +5,8 @@ import (
 	// "fmt"
 	"github.com/panyam/goutils/utils"
 	structpb "google.golang.org/protobuf/types/known/structpb"
-	"legfinder/tdproxy/protos"
-	"legfinder/tdproxy/tdclient"
+	"tdproxy/protos"
+	"tdproxy/tdclient"
 )
 
 type TickerService struct {

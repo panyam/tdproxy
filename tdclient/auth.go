@@ -14,6 +14,12 @@ import (
 	"time"
 )
 
+type Auth struct {
+	models.Auth
+	wsUrl       *url.URL
+	credentials utils.StringMap
+}
+
 type AuthStore struct {
 	RootDir  string
 	auths    map[string]*Auth
@@ -178,7 +184,6 @@ func (auth *Auth) CompleteAuth(code string) (err error) {
 	if err != nil {
 		return err
 	}
-	now := time.Now().UTC()
 	form := url.Values{}
 	form.Add("grant_type", "authorization_code")
 	form.Add("client_id", auth.ClientId)
@@ -215,9 +220,8 @@ func (auth *Auth) CompleteAuth(code string) (err error) {
 	}
 	tokenmap := token.(utils.StringMap)
 	expires_in := time.Duration(tokenmap["expires_in"].(float64))
-	expires_at := now.Add(expires_in * time.Second)
-	log.Println("Now, ExpiresIn, ExpiresAt: ", now, expires_in, expires_at)
-	tokenmap["expires_at"] = utils.FormatTime(expires_at)
+	auth.ExpiresAt = time.Now().UTC().Add(expires_in * time.Second)
+	log.Println("Now, ExpiresIn, ExpiresAt: ", now, expires_in, auth.ExpiresAt)
 	auth.authToken = tokenmap
 	return err
 }

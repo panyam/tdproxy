@@ -5,9 +5,9 @@ import (
 	"github.com/panyam/goutils/utils"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
-	"legfinder/tdproxy/models"
 	"log"
 	"os"
+	"tdproxy/models"
 	"testing"
 	"time"
 )

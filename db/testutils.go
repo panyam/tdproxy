@@ -1,9 +1,9 @@
-package filedb
+package db
 
 import (
 	"fmt"
 	"github.com/panyam/goutils/utils"
-	"legfinder/tdproxy/models"
+	"tdproxy/models"
 )
 
 func MakeTestOptions(symbol string, date string, is_call bool, start_price float64, end_price float64, price_incr float64, ask float64, open_interest int) []*models.Option {

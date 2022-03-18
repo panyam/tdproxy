@@ -1,9 +1,9 @@
 package services
 
 import (
-	"legfinder/tdproxy/protos"
-	"legfinder/tdproxy/tdclient"
 	"log"
+	"tdproxy/protos"
+	"tdproxy/tdclient"
 )
 
 type SubscriptionId = int64

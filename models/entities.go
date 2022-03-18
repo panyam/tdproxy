@@ -3,7 +3,6 @@ package models
 import (
 	"fmt"
 	"github.com/panyam/goutils/utils"
-	"net/url"
 	"sort"
 	"strconv"
 	"strings"
@@ -11,57 +10,45 @@ import (
 )
 
 type Auth struct {
-	ClientId       string
+	ClientId       string `gorm:"primaryKey"`
 	CallbackUrl    string
+	CreatedAt      time.Time `gorm:"autoCreateTime"`
+	UpdatedAt      time.Time `gorm:"autoUpdateTime"`
+	ExpiresAt      time.Time
 	authToken      utils.StringMap
 	userPrincipals utils.StringMap
-	credentials    utils.StringMap
-	wsUrl          *url.URL
 }
 
 type AuthToken struct {
-	AccessToken   string
-	Scope         string
-	ExpiresIn     int32
-	TokenType     string
-	CreatedAt     string
-	LastFetchedAt string
+	AccessToken string
+	Scope       string
+	TokenType   string
 }
 
 type Ticker struct {
-	Symbol          string
+	Symbol          string `gorm:"primaryKey"`
 	LastRefreshedAt time.Time
 	Info            map[string]interface{}
 }
 
 type Option struct {
-	Symbol      string
-	DateString  string
-	PriceString string
-	IsCall      bool
+	Symbol      string `gorm:"primaryKey" gorm:"index:ByCallSymbolDate,priority:1"`
+	DateString  string `gorm:"primaryKey" gorm:"index:ByCallSymbolDate,priority:2"`
+	IsCall      bool   `gorm:"primaryKey" gorm:"index:ByCallSymbolDate,priority:3"`
+	PriceString string `gorm:"primaryKey"`
 	Info        map[string]interface{}
-}
-
-type TickerChainInfo struct {
-	Symbol          string
-	AvailableDates  []string
-	LastRefreshedAt time.Time
-}
-
-type Chain struct {
-	Symbol          string
-	DateString      string
-	IsCall          bool
-	LastRefreshedAt time.Time
-	Options         []*Option
+	strikePrice float64
 }
 
 func (opt *Option) StrikePrice() float64 {
-	result, err := strconv.ParseFloat(opt.PriceString, 64)
-	if err != nil {
-		fmt.Printf("Invalid price string: %s\n", opt.PriceString)
+	if opt.strikePrice <= 0 {
+		result, err := strconv.ParseFloat(opt.PriceString, 64)
+		if err != nil {
+			fmt.Printf("Invalid price string: %s\n", opt.PriceString)
+		}
+		opt.strikePrice = result
 	}
-	return result
+	return opt.strikePrice
 }
 
 func (opt *Option) AskPrice() float64 {
@@ -90,6 +77,20 @@ func (opt *Option) Delta() float64 {
 
 func (opt *Option) Multiplier() float64 {
 	return opt.Info["multiplier"].(float64)
+}
+
+type ChainInfo struct {
+	Symbol          string   `gorm:"primaryKey"`
+	AvailableDates  []string `gorm:"type:integer[]"`
+	LastRefreshedAt time.Time
+}
+
+type Chain struct {
+	Symbol          string `gorm:"primaryKey"`
+	DateString      string `gorm:"primaryKey"`
+	IsCall          bool   `gorm:"primaryKey"`
+	LastRefreshedAt time.Time
+	Options         []*Option `gorm:"-"` // dont read/write this
 }
 
 func ChainFromDict(symbol string, date string, is_call bool,

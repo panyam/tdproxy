@@ -5,19 +5,19 @@ import (
 	"fmt"
 	"github.com/panyam/goutils/utils"
 	"io/ioutil"
-	"legfinder/tdproxy/models"
 	"log"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
+	"tdproxy/models"
 	"time"
 )
 
 type ChainDB struct {
 	DataRoot          string
 	TickersFolderPath string
-	chainInfoCache    map[string]*models.TickerChainInfo
+	chainInfoCache    map[string]*models.ChainInfo
 	chainCache        map[string]*models.Chain
 }
 
@@ -33,7 +33,7 @@ func NewChainDB(dataroot string) *ChainDB {
 	}
 
 	out := ChainDB{DataRoot: dataroot, TickersFolderPath: tickers_folder_path}
-	out.chainInfoCache = make(map[string]*models.TickerChainInfo)
+	out.chainInfoCache = make(map[string]*models.ChainInfo)
 	out.chainCache = make(map[string]*models.Chain)
 	return &out
 }
@@ -104,7 +104,7 @@ func (db *ChainDB) SaveChainInfo(symbol string, last_refreshed_at time.Time) err
 /**
  * Get information about a chain.
  */
-func (db *ChainDB) GetChainInfo(symbol string) (*models.TickerChainInfo, error) {
+func (db *ChainDB) GetChainInfo(symbol string) (*models.ChainInfo, error) {
 	chain_info_path, err := db.ChainInfoPathForSymbol(symbol, true)
 	last_refreshed_at := time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC)
 	if err == nil {
@@ -122,7 +122,7 @@ func (db *ChainDB) GetChainInfo(symbol string) (*models.TickerChainInfo, error) 
 		log.Fatal(err)
 	}
 
-	out := &models.TickerChainInfo{
+	out := &models.ChainInfo{
 		Symbol: symbol,
 	}
 	for _, file := range files {

@@ -1,5 +1,5 @@
 syntax = "proto3";
-option go_package = "legfinder/tdproxy/protos";
+option go_package = "tdproxy/protos";
 package protos;
 
 service AuthService {

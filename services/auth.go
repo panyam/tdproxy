@@ -5,10 +5,10 @@ import (
 	"github.com/panyam/goutils/utils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"legfinder/tdproxy/db"
-	"legfinder/tdproxy/protos"
-	"legfinder/tdproxy/tdclient"
 	"log"
+	"tdproxy/db"
+	"tdproxy/protos"
+	"tdproxy/tdclient"
 )
 
 type AuthService struct {

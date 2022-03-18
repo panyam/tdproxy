@@ -7,14 +7,14 @@ import (
 	"github.com/panyam/pslite/cli"
 	pslconfig "github.com/panyam/pslite/config"
 	"google.golang.org/grpc"
-	"legfinder/tdproxy/config"
-	"legfinder/tdproxy/protos"
-	svc "legfinder/tdproxy/services"
-	"legfinder/tdproxy/tdclient"
 	"log"
 	"net"
 	"strconv"
 	"strings"
+	"tdproxy/config"
+	"tdproxy/protos"
+	svc "tdproxy/services"
+	"tdproxy/tdclient"
 )
 
 const TEST_CALLBACK_URL = "https://localhost:8000/callback"

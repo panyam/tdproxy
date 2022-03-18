@@ -4,13 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"github.com/panyam/goutils/utils"
-	"legfinder/tdproxy/db"
-	"legfinder/tdproxy/models"
 	"log"
 	"net/http"
 	"os"
 	"path"
 	"strings"
+	"tdproxy/db"
+	"tdproxy/models"
 	"time"
 )
 

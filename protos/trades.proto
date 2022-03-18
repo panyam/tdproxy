@@ -1,0 +1,100 @@
+
+syntax = "proto3";
+import "google/protobuf/struct.proto";
+option go_package = "tdproxy/protos";
+package protos;
+
+message Single {
+  string option_key = 1;
+}
+
+message Spread {
+  string name = 1;
+  string short_name = 2;
+  repeated Single singles = 3;
+}
+
+message Order {
+  bool is_buy = 1;
+  int32 quantity = 2;
+  float overridden_premium  = 3;
+  oneof details {
+    Single single = 4;
+    Spread spread = 5;
+  }
+}
+
+message Trade {
+  string trade_id = 1;
+  string symbol = 2;
+  string cretaed_at = 3;
+  string strategy_name = 4;
+  repeated Order orders = 5;
+  google.protobuf.Struct metadata = 6;
+
+  // Payoffs that user can provide
+  float payoff_expected_gain = 7;
+  float payoff_expected_loss = 8;
+  float payoff_gain_prob = 9;
+  float payoff_gain_loss = 10;
+  float payoff_bpe = 11;
+}
+
+service TradeService {
+  rpc SaveTrades(SaveTradesRequest) returns (SaveTradesResponse) {}
+  rpc ListTrades(ListTradesRequest) returns (ListTradesResponse) {}
+  rpc RemoveTrades(RemoveTradesRequest) returns (RemoveTradesResponse) {}
+}
+
+message SaveTradesRequest {
+  repeated Trade trades = 1;
+}
+
+message SaveTradesResponse {
+}
+
+message TradeOrder {
+  string criteria = 1;
+}
+
+message TradeFilter {
+  /**
+   * Which symbol trades are being filtered on.
+   */
+  repeated string filter_by_symbols = 1;
+
+  /**
+   * Return trades on a particular date.
+   */
+  repeated string filter_by_date = 2;
+
+  /**
+   * Return trades for a particular strategy.
+   */
+  repeated string filter_by_strategy = 3;
+
+  /**
+   * Filter by trades with atleast this gain probability.
+   */
+  repeated float filter_min_gain = 4;
+
+  /**
+   * Filter by trades with atleast this much payoff.
+   */
+  repeated float filter_min_profit = 5;
+}
+
+message ListTradesRequest {
+  TradeFilter filter_by = 1;
+  TradeOrder order_by = 2;
+}
+
+message ListTradesResponse {
+}
+
+message RemoveTradesRequest {
+  TradeFilter filter_by = 1;
+}
+
+message RemoveTradesResponse {
+}

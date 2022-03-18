@@ -9,9 +9,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	structpb "google.golang.org/protobuf/types/known/structpb"
-	"legfinder/tdproxy/protos"
-	"legfinder/tdproxy/tdclient"
 	"log"
+	"tdproxy/protos"
+	"tdproxy/tdclient"
 )
 
 type StreamerService struct {
