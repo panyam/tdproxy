@@ -43,12 +43,12 @@ func TestTickerSaveAndGet(t *testing.T) {
 	// Save a ticker here
 	now := time.Now().UTC()
 	info, err := utils.JsonDecodeStr(`{"a": 1, "b": 2}`)
-	ticker := models.Ticker{
-		Symbol:          "SYM",
-		LastRefreshedAt: now,
-		Info:            info.(map[string]interface{}),
-	}
-	db.SaveTicker(&ticker)
+	ticker := models.NewTicker(
+		"SYM",
+		now,
+		info.(map[string]interface{}),
+	)
+	db.SaveTicker(ticker)
 
 	loaded, err := db.GetTicker("SYM")
 	assert.Equal(t, err, nil, "Should be able to load ticker")

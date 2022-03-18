@@ -2,11 +2,11 @@ package filedb
 
 import (
 	"fmt"
-	"github.com/panyam/goutils/utils"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"log"
 	"os"
+	dbp "tdproxy/db"
 	"tdproxy/models"
 	"testing"
 	"time"
@@ -15,7 +15,7 @@ import (
 func CreateTestChainDB(t *testing.T) *ChainDB {
 	dir, err := ioutil.TempDir("/tmp", "tdproxydb")
 	if err != nil {
-		log.Fatal(err)
+		log.Panic("Could not create tempdir: ", err)
 	}
 
 	dbroot := dir
@@ -42,7 +42,7 @@ func TestChainSaveAndGet(t *testing.T) {
 
 	// Here we will still fail as QUOTES.json doesnt exist
 	path, err = db.ChainPathForSymbol("SYM", "2022_01_02", true)
-	assert.Equal(t, err, nil)
+	assert.Equal(t, err, nil, "Error should have been nil")
 	assert.Equal(t, path, fmt.Sprintf("%s/tickers/SYM/chains/%s", db.DataRoot, TEST_DATE))
 
 	// Save a ticker here
@@ -51,7 +51,7 @@ func TestChainSaveAndGet(t *testing.T) {
 		"SYM",
 		TEST_DATE,
 		true,
-		MakeTestOptions("SYM", TEST_DATE, true, 10, 100, 10, 50, 10),
+		dbp.MakeTestOptions("SYM", TEST_DATE, true, 10, 100, 10, 50, 10),
 	)
 	chain.LastRefreshedAt = now
 	db.SaveChain(chain)

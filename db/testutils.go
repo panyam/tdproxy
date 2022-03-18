@@ -11,14 +11,14 @@ func MakeTestOptions(symbol string, date string, is_call bool, start_price float
 	for curr := start_price; curr <= end_price; curr += price_incr {
 		infostr := fmt.Sprintf(`{"ask": %f, "bid": %f, "openInterest": %d, "multiplier": 100, "delta": 0.5}`, ask, ask, open_interest)
 		info, _ := utils.JsonDecodeStr(infostr)
-		option := models.Option{
-			Symbol:      symbol,
-			DateString:  date,
-			PriceString: utils.PriceString(curr),
-			IsCall:      is_call,
-			Info:        info.(map[string]interface{}),
-		}
-		out = append(out, &option)
+		option := models.NewOption(
+			symbol,
+			date,
+			utils.PriceString(curr),
+			is_call,
+			info.(map[string]interface{}),
+		)
+		out = append(out, option)
 	}
 	return out
 }
