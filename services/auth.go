@@ -5,6 +5,7 @@ import (
 	"github.com/panyam/goutils/utils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"legfinder/tdproxy/db"
 	"legfinder/tdproxy/protos"
 	"legfinder/tdproxy/tdclient"
 	"log"
@@ -13,7 +14,7 @@ import (
 type AuthService struct {
 	protos.UnimplementedAuthServiceServer
 	TDClient  *tdclient.Client
-	AuthStore *tdclient.AuthStore
+	AuthStore db.AuthStore
 }
 
 func (s *AuthService) AddAuthToken(ctx context.Context, request *protos.AddAuthTokenRequest) (*protos.AddAuthTokenResponse, error) {

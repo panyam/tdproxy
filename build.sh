@@ -7,6 +7,7 @@ protoc --go_out=. --go_opt=paths=source_relative \
        --go-grpc_out=. --go-grpc_opt=paths=source_relative \
       protos/auth.proto \
       protos/chains.proto \
+      protos/trades.proto \
       protos/streamer.proto \
       protos/tickers.proto
 
@@ -23,6 +24,7 @@ python3 -m grpc_tools.protoc -I./protos   \
       --grpc_python_out="$PY_OUT_DIR"     \
       protos/$PYPKGNAME/auth.proto \
       protos/$PYPKGNAME/chains.proto \
+      protos/$PYPKGNAME/trades.proto \
       protos/$PYPKGNAME/streamer.proto \
       protos/$PYPKGNAME/tickers.proto
 mv protos/$PYPKGNAME/$PYPKGNAME/* $PY_OUT_DIR/src/$PYPKGNAME

@@ -19,7 +19,8 @@ var InvalidChainJson = errors.New("Invalid chain json dictionary")
 
 type Client struct {
 	RootDir              string
-	db                   *db.QuoteDB
+	chain_db             db.ChainDB
+	ticker_db            db.TickerDB
 	DefaultTickerRefresh int32
 	DefaultChainRefresh  int32
 	Auth                 *Auth
@@ -30,11 +31,13 @@ const (
 	TDAMT_OPT_TICKER_URL = "https://api.tdameritrade.com/v1/marketdata/quotes"
 )
 
-func NewClient(rootdir string) *Client {
+func NewClient(rootdir string, chain_db db.ChainDB, ticker_db db.TickerDB) *Client {
 	fmt.Println("Client Root Dir: ", rootdir)
 	out := &Client{RootDir: rootdir}
 	os.MkdirAll(rootdir, 0777)
-	out.db = db.NewDB(path.Join(rootdir, "quotedb"))
+	out.chain_db = chain_db
+	out.ticker_db = ticker_db
+	// out.db = db.NewDB(path.Join(rootdir, "quotedb"))
 	out.DefaultTickerRefresh = 1800
 	out.DefaultChainRefresh = 1800
 	return out
@@ -49,7 +52,7 @@ func (td *Client) GetTickers(symbols []string, refresh_type int32) (map[string]*
 	tickers := make(map[string]*models.Ticker)
 	now := time.Now().UTC()
 	for _, sym := range symbols {
-		ticker := qdb.GetTicker(sym)
+		ticker := ticker_db.GetTicker(sym)
 		if ticker == nil {
 			outdated = append(outdated, sym)
 		} else if utils.NeedsRefresh(refresh_type, ticker.LastRefreshedAt, now) {
@@ -79,7 +82,7 @@ func (td *Client) GetChainInfo(symbol string, refresh_type int32) (*models.Ticke
 	if refresh_type == 0 {
 		refresh_type = td.DefaultChainRefresh
 	}
-	chain_info, err := td.db.GetChainInfo(symbol)
+	chain_info, err := td.chain_db.GetChainInfo(symbol)
 	if err != nil {
 		return nil, err
 	}
@@ -87,9 +90,9 @@ func (td *Client) GetChainInfo(symbol string, refresh_type int32) (*models.Ticke
 	if chain_info == nil || utils.NeedsRefresh(refresh_type, chain_info.LastRefreshedAt, now) {
 		err = td.FetchChain(symbol, "", true)
 		if err == nil {
-			err = td.db.SaveChainInfo(symbol, time.Now().UTC())
+			err = td.chain_db.SaveChainInfo(symbol, time.Now().UTC())
 			// Get the chain info again
-			chain_info, err = td.db.GetChainInfo(symbol)
+			chain_info, err = td.chain_db.GetChainInfo(symbol)
 		}
 	}
 	return chain_info, err
@@ -102,11 +105,11 @@ func (td *Client) GetChain(symbol string, date string, is_call bool, refresh_typ
 	date = strings.Replace(date, "-", "_", -1)
 	qdb := td.db
 	now := time.Now().UTC()
-	chain = qdb.GetChain(symbol, date, is_call)
+	chain = qchain_db.GetChain(symbol, date, is_call)
 	if chain == nil || utils.NeedsRefresh(refresh_type, chain.LastRefreshedAt, now) {
 		err = td.FetchChain(symbol, date, is_call)
 		if err == nil {
-			chain = qdb.GetChain(symbol, date, is_call)
+			chain = qchain_db.GetChain(symbol, date, is_call)
 			if chain == nil {
 				chtype := "PUT"
 				if is_call {
@@ -176,10 +179,10 @@ func (td *Client) FetchChain(symbol string, date string, is_call bool) error {
 		return err
 	}
 	for _, entry := range calls {
-		td.db.SaveChain(entry)
+		td.chain_db.SaveChain(entry)
 	}
 	for _, entry := range puts {
-		td.db.SaveChain(entry)
+		td.chain_db.SaveChain(entry)
 	}
 	// chains = group_chains_by_date(chain)
 	return err

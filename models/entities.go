@@ -2,11 +2,22 @@ package models
 
 import (
 	"fmt"
+	"github.com/panyam/goutils/utils"
+	"net/url"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 )
+
+type Auth struct {
+	ClientId       string
+	CallbackUrl    string
+	authToken      utils.StringMap
+	userPrincipals utils.StringMap
+	credentials    utils.StringMap
+	wsUrl          *url.URL
+}
 
 type AuthToken struct {
 	AccessToken   string

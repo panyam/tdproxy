@@ -1,4 +1,4 @@
-package db
+package filedb
 
 import (
 	"encoding/json"
@@ -14,15 +14,14 @@ import (
 	"time"
 )
 
-type QuoteDB struct {
+type ChainDB struct {
 	DataRoot          string
 	TickersFolderPath string
 	chainInfoCache    map[string]*models.TickerChainInfo
 	chainCache        map[string]*models.Chain
-	tickerCache       map[string]*models.Ticker
 }
 
-func NewDB(dataroot string) *QuoteDB {
+func NewChainDB(dataroot string) *ChainDB {
 	dataroot, err := filepath.Abs(dataroot)
 	if err != nil {
 		log.Fatalf("Cannot find directory: %s", dataroot)
@@ -33,34 +32,13 @@ func NewDB(dataroot string) *QuoteDB {
 		log.Fatalf("Cannot find directory: %s", dataroot)
 	}
 
-	out := QuoteDB{DataRoot: dataroot, TickersFolderPath: tickers_folder_path}
+	out := ChainDB{DataRoot: dataroot, TickersFolderPath: tickers_folder_path}
 	out.chainInfoCache = make(map[string]*models.TickerChainInfo)
 	out.chainCache = make(map[string]*models.Chain)
-	out.tickerCache = make(map[string]*models.Ticker)
 	return &out
 }
 
-func (db *QuoteDB) TickerPathForSymbol(symbol string, ensure bool) (string, error) {
-	out := path.Join(db.TickersFolderPath, symbol)
-	_, err := os.Stat(out)
-	if os.IsNotExist(err) {
-		if ensure {
-			if err := os.MkdirAll(out, 0777); err != nil {
-				log.Fatalf("Cannot create directory: %s", out)
-			}
-		} else {
-			err = fmt.Errorf("Ticker path does not exist")
-		}
-	}
-	out = path.Join(db.TickersFolderPath, symbol, "QUOTES.json")
-	_, err = os.Stat(out)
-	if os.IsNotExist(err) {
-		err = fmt.Errorf("Ticker path does not exist")
-	}
-	return out, err
-}
-
-func (db *QuoteDB) ChainInfoPathForSymbol(symbol string, ensure bool) (string, error) {
+func (db *ChainDB) ChainInfoPathForSymbol(symbol string, ensure bool) (string, error) {
 	out := path.Join(db.TickersFolderPath, symbol, "chains")
 	var err error = nil
 	if _, err = os.Stat(out); os.IsNotExist(err) {
@@ -79,7 +57,7 @@ func (db *QuoteDB) ChainInfoPathForSymbol(symbol string, ensure bool) (string, e
 	return out, err
 }
 
-func (db *QuoteDB) ChainPathForSymbol(symbol string, date string, ensure bool) (string, error) {
+func (db *ChainDB) ChainPathForSymbol(symbol string, date string, ensure bool) (string, error) {
 	out := path.Join(db.TickersFolderPath, symbol, "chains")
 	if len(strings.TrimSpace(date)) > 0 {
 		out = path.Join(out, date)
@@ -105,7 +83,7 @@ func chainTypeFor(is_call bool) string {
 	return chtype
 }
 
-func (db *QuoteDB) ChainKeyFor(symbol string, date string, is_call bool) string {
+func (db *ChainDB) ChainKeyFor(symbol string, date string, is_call bool) string {
 	chtype := chainTypeFor(is_call)
 	return strings.Join([]string{symbol, date, chtype}, "/")
 }
@@ -113,7 +91,7 @@ func (db *QuoteDB) ChainKeyFor(symbol string, date string, is_call bool) string 
 /**
  * Saves metadata about a chain - currently when it was last refreshed.
  */
-func (db *QuoteDB) SaveChainInfo(symbol string, last_refreshed_at time.Time) error {
+func (db *ChainDB) SaveChainInfo(symbol string, last_refreshed_at time.Time) error {
 	chain_info_path, err := db.ChainInfoPathForSymbol(symbol, true)
 	d1 := []byte(fmt.Sprintf(`{"last_refreshed_at": "%s"}`, utils.FormatTime(last_refreshed_at)))
 	err = os.WriteFile(chain_info_path, d1, 0777)
@@ -126,7 +104,7 @@ func (db *QuoteDB) SaveChainInfo(symbol string, last_refreshed_at time.Time) err
 /**
  * Get information about a chain.
  */
-func (db *QuoteDB) GetChainInfo(symbol string) (*models.TickerChainInfo, error) {
+func (db *ChainDB) GetChainInfo(symbol string) (*models.TickerChainInfo, error) {
 	chain_info_path, err := db.ChainInfoPathForSymbol(symbol, true)
 	last_refreshed_at := time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC)
 	if err == nil {
@@ -158,7 +136,7 @@ func (db *QuoteDB) GetChainInfo(symbol string) (*models.TickerChainInfo, error) 
 	return out, nil
 }
 
-func (db *QuoteDB) GetChain(symbol string, date string, is_call bool) *models.Chain {
+func (db *ChainDB) GetChain(symbol string, date string, is_call bool) *models.Chain {
 	chain_key := db.ChainKeyFor(symbol, date, is_call)
 	if val, ok := db.chainCache[chain_key]; ok {
 		return val
@@ -197,7 +175,7 @@ func (db *QuoteDB) GetChain(symbol string, date string, is_call bool) *models.Ch
 	return chain
 }
 
-func (db *QuoteDB) SaveChain(chain *models.Chain) error {
+func (db *ChainDB) SaveChain(chain *models.Chain) error {
 	chtype := chainTypeFor(chain.IsCall)
 	log.Printf("Saving (%s) chain for %s on %s\n", chtype, chain.Symbol, chain.DateString)
 	chain_path, err := db.ChainPathForSymbol(chain.Symbol, chain.DateString, true)
@@ -220,56 +198,5 @@ func (db *QuoteDB) SaveChain(chain *models.Chain) error {
 	}
 	chain_key := db.ChainKeyFor(chain.Symbol, chain.DateString, chain.IsCall)
 	db.chainCache[chain_key] = chain
-	return nil
-}
-
-func (db *QuoteDB) GetTicker(symbol string) *models.Ticker {
-	ticker_key := symbol
-	if val, ok := db.tickerCache[ticker_key]; ok {
-		return val
-	}
-
-	ticker_path, err := db.TickerPathForSymbol(symbol, false)
-	if err != nil {
-		return nil
-	}
-
-	// Load from file
-	data, err := utils.JsonDecodeFile(ticker_path)
-	if err != nil {
-		return nil
-	}
-
-	json_data := data.(map[string]interface{})
-	var last_refreshed_at time.Time = time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC)
-	if datestr, ok := json_data["last_refreshed_at"]; ok {
-		last_refreshed_at = utils.ParseTime(datestr.(string))
-	}
-	ticker_info, ok := json_data["ticker"].(map[string]interface{})
-	if !ok {
-		return nil
-	}
-	ticker := models.Ticker{Symbol: symbol,
-		LastRefreshedAt: last_refreshed_at,
-		Info:            ticker_info}
-	db.tickerCache[ticker_key] = &ticker
-	return &ticker
-}
-
-func (db *QuoteDB) SaveTicker(ticker *models.Ticker) error {
-	ticker_path, _ := db.TickerPathForSymbol(ticker.Symbol, true)
-	content := map[string]interface{}{
-		"last_refreshed_at": ticker.LastRefreshedAt,
-		"ticker":            ticker.Info,
-	}
-	marshalled, err := json.Marshal(content)
-	if err != nil {
-		log.Fatalf("Could not marshall ticker (%s) to JSON", ticker.Symbol)
-	}
-	d1 := []byte(marshalled)
-	if err := os.WriteFile(ticker_path, d1, 0777); err != nil {
-		log.Fatalf("Could not write ticker (%s) to file (%s)", ticker.Symbol, ticker_path)
-	}
-	db.tickerCache[ticker.Symbol] = ticker
 	return nil
 }

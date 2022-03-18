@@ -72,6 +72,7 @@ func main() {
 
 	protos.RegisterTickerServiceServer(grpcServer, &svc.TickerService{TDClient: tdinfo})
 	protos.RegisterChainServiceServer(grpcServer, &svc.ChainService{TDClient: tdinfo})
+	protos.RegisterTradeServiceServer(grpcServer, &svc.TradeService{TDClient: tdinfo})
 
 	auth_svc := &svc.AuthService{TDClient: tdinfo, AuthStore: auth_store}
 	protos.RegisterAuthServiceServer(grpcServer, auth_svc)

@@ -123,15 +123,6 @@ const (
 	TDAMT_USER_PRINCIPALS_URL = "https://api.tdameritrade.com/v1/userprincipals"
 )
 
-type Auth struct {
-	ClientId       string
-	CallbackUrl    string
-	authToken      utils.StringMap
-	userPrincipals utils.StringMap
-	credentials    utils.StringMap
-	wsUrl          *url.URL
-}
-
 func (a *Auth) ToJson() utils.StringMap {
 	out := make(utils.StringMap)
 	out["client_id"] = a.ClientId
