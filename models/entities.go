@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"github.com/panyam/goutils/utils"
+	"log"
 	"sort"
 	"strconv"
 	"strings"
@@ -99,10 +100,11 @@ func NewOption(symbol string, date_string string, price_string string, is_call b
 		PriceString: price_string,
 		IsCall:      is_call,
 	}
-	return out.Refresh()
+	out.Refresh()
+	return out
 }
 
-func (opt *Option) Refresh() *Option {
+func (opt *Option) Refresh() bool {
 	if val, ok := opt.Info["ask"]; ok {
 		opt.AskPrice = val.(float64)
 	}
@@ -119,6 +121,11 @@ func (opt *Option) Refresh() *Option {
 		opt.OpenInterest = int32(val.(float64))
 	}
 	if val, ok := opt.Info["delta"]; ok {
+		defer func() {
+			if err := recover(); err != nil {
+				log.Println("Panic Occurred: ", err, val)
+			}
+		}()
 		opt.Delta = val.(float64)
 	}
 	if val, ok := opt.Info["multiplier"]; ok {
@@ -131,7 +138,7 @@ func (opt *Option) Refresh() *Option {
 		}
 		opt.StrikePrice = result
 	}
-	return opt
+	return true
 }
 
 type ChainInfo struct {
@@ -168,7 +175,11 @@ func ChainFromDict(symbol string, date string, is_call bool,
 			PriceString: price_string,
 			Info:        detail,
 		}
-		options = append(options, option.Refresh())
+		if !option.Refresh() {
+			log.Println("Refresh failed: ", option)
+		} else {
+			options = append(options, &option)
+		}
 	}
 	chain := NewChain(symbol, date, is_call, options)
 	chain.LastRefreshedAt = refreshed_at
@@ -189,7 +200,12 @@ func NewChain(symbol string, date string, is_call bool, options []*Option) *Chai
 func (chain *Chain) SortOptions() *Chain {
 	options := chain.Options
 	sort.Slice(options, func(i, j int) bool {
-		return options[i].StrikePrice < options[j].StrikePrice
+		a := options[i]
+		b := options[j]
+		if a == nil || b == nil {
+			log.Println("How can this be? ", a, b)
+		}
+		return a.StrikePrice < b.StrikePrice
 	})
 	return chain
 }
