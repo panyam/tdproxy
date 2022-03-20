@@ -11,8 +11,9 @@ import (
 )
 
 type AuthDB struct {
-	RootDir string
-	auths   map[string]*models.Auth
+	RootDir  string
+	auths    map[string]*models.Auth
+	lastAuth *models.Auth
 }
 
 func NewAuthDB(rootdir string) *AuthDB {
@@ -74,6 +75,7 @@ func (a *AuthDB) Reload() (err error) {
 		}
 		auth.CallbackUrl = callback_url.(string)
 		auth.FromJson(clientInfo)
+		a.lastAuth = auth
 	}
 	fmt.Println("Loaded auth tokens: ", entries)
 	return nil
@@ -94,4 +96,8 @@ func (a *AuthDB) EnsureAuth(client_id string) (auth *models.Auth, err error) {
 	}
 	auth.ClientId = client_id
 	return
+}
+
+func (a *AuthDB) LastAuth() *models.Auth {
+	return a.lastAuth
 }

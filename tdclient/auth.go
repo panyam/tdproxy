@@ -27,8 +27,13 @@ type AuthStore struct {
 /**
  * Creates a new auth store.
  */
-func NewAuthStore(authdb db.AuthDB) *AuthStore {
-	return &AuthStore{authdb: authdb}
+func NewAuthStore(authdb db.AuthDB) (a *AuthStore) {
+	a = &AuthStore{authdb: authdb}
+	last := authdb.LastAuth()
+	if last != nil {
+		a.lastAuth = &Auth{Auth: last}
+	}
+	return
 }
 
 /**

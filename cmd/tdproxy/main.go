@@ -87,6 +87,7 @@ func main() {
 	if *client_id != "" && *callback_url != "" {
 		auth_store.EnsureAuth(*client_id, *callback_url)
 	}
+	log.Println("Auth Last: ", auth_store.LastAuth())
 	tdinfo := tdclient.NewClient(utils.ExpandUserPath(*tdroot), chaindb, tickerdb)
 	tdinfo.Auth = auth_store.LastAuth()
 	callbackHandler := tdclient.NewCallbackHandler(tdinfo,

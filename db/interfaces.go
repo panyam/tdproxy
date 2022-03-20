@@ -8,6 +8,7 @@ import (
 type AuthDB interface {
 	EnsureAuth(client_id string) (*models.Auth, error)
 	SaveAuth(auth *models.Auth) error
+	LastAuth() *models.Auth
 }
 
 type ChainDB interface {
