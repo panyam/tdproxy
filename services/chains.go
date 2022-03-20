@@ -5,6 +5,7 @@ import (
 	"github.com/panyam/goutils/utils"
 	structpb "google.golang.org/protobuf/types/known/structpb"
 	"log"
+	"tdproxy/models"
 	"tdproxy/protos"
 	"tdproxy/tdclient"
 )
@@ -46,18 +47,32 @@ func (s *ChainService) GetChain(ctx context.Context, request *protos.GetChainReq
 			Options:         make([]*protos.Option, len(chain.Options)),
 		}
 		for i, option := range chain.Options {
-			info, err := structpb.NewStruct(option.Info)
+			opt, err := OptionToProto(option)
 			if err != nil {
 				panic(err)
 			}
-			resp.Chain.Options[i] = &protos.Option{
-				Symbol:      option.Symbol,
-				DateString:  option.DateString,
-				PriceString: option.PriceString,
-				IsCall:      option.IsCall,
-				Info:        info,
-			}
+			resp.Chain.Options[i] = opt
 		}
 	}
 	return resp, err
+}
+
+func OptionToProto(option *models.Option) (*protos.Option, error) {
+	info, err := structpb.NewStruct(option.Info)
+	if err != nil {
+		return nil, err
+	}
+	return &protos.Option{
+		Symbol:       option.Symbol,
+		DateString:   option.DateString,
+		PriceString:  option.PriceString,
+		IsCall:       option.IsCall,
+		AskPrice:     option.AskPrice,
+		BidPrice:     option.BidPrice,
+		MarkPrice:    option.MarkPrice,
+		Multiplier:   option.Multiplier,
+		Delta:        option.Delta,
+		OpenInterest: option.OpenInterest,
+		Info:         info,
+	}, nil
 }

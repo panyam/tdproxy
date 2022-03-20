@@ -7,11 +7,16 @@ import (
 	"github.com/panyam/pslite/cli"
 	pslconfig "github.com/panyam/pslite/config"
 	"google.golang.org/grpc"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 	"log"
 	"net"
 	"strconv"
 	"strings"
 	"tdproxy/config"
+	"tdproxy/db"
+	"tdproxy/db/filedb"
+	"tdproxy/db/gormdb"
 	"tdproxy/protos"
 	svc "tdproxy/services"
 	"tdproxy/tdclient"
@@ -30,6 +35,7 @@ var (
 	callback_pkey  = flag.String("callback_pkey", "./tdclient/server.key", "Private key file for SSL Callback handler")
 	topic_endpoint = flag.String("topic_endpoint", fmt.Sprintf("%d", pslconfig.DefaultServerPort()), "End point where topics can be published and subscribed to")
 	topics_folder  = flag.String("topics_folder", "~/.tdroot/topics", "End point where topics can be published and subscribed to")
+	db_endpoint    = flag.String("db_endpoint", "file://~/.tdroot", "Endpoint of DB to use")
 )
 
 func createPubsubClient() *cli.PubSub {
@@ -52,16 +58,36 @@ func createPubsubClient() *cli.PubSub {
 	return pubsub
 }
 
+func getDBs() (authdb db.AuthDB, tickerdb db.TickerDB, chaindb db.ChainDB) {
+	if strings.HasPrefix(*db_endpoint, "file://") {
+		dbpath := utils.ExpandUserPath((*db_endpoint)[len("file://"):])
+		authdb = filedb.NewAuthDB(dbpath)
+		chaindb = filedb.NewChainDB(dbpath)
+		tickerdb = filedb.NewTickerDB(dbpath)
+	} else if strings.HasPrefix(*db_endpoint, "sqlite://") {
+		dbpath := utils.ExpandUserPath((*db_endpoint)[len("sqlite://"):])
+		db, err := gorm.Open(sqlite.Open(dbpath), &gorm.Config{})
+		if err != nil {
+			panic("failed to connect database")
+		}
+		authdb = gormdb.NewAuthDB(db)
+		chaindb = gormdb.NewChainDB(db)
+		tickerdb = gormdb.NewTickerDB(db)
+	} else {
+		log.Panic("Invalid db_endpoint: ", *db_endpoint)
+	}
+	return authdb, tickerdb, chaindb
+}
+
 func main() {
 	flag.Parse()
-	grpcServer := grpc.NewServer()
+	authdb, tickerdb, chaindb := getDBs()
 	// see if we need to start the pubsub endpoint locally
-	pubsub := createPubsubClient()
-	auth_store := tdclient.NewAuthStore(utils.ExpandUserPath(*tdroot))
+	auth_store := tdclient.NewAuthStore(authdb)
 	if *client_id != "" && *callback_url != "" {
 		auth_store.EnsureAuth(*client_id, *callback_url)
 	}
-	tdinfo := tdclient.NewClient(utils.ExpandUserPath(*tdroot))
+	tdinfo := tdclient.NewClient(utils.ExpandUserPath(*tdroot), chaindb, tickerdb)
 	tdinfo.Auth = auth_store.LastAuth()
 	callbackHandler := tdclient.NewCallbackHandler(tdinfo,
 		auth_store,
@@ -70,6 +96,7 @@ func main() {
 		*callback_pkey)
 	go callbackHandler.Start()
 
+	grpcServer := grpc.NewServer()
 	protos.RegisterTickerServiceServer(grpcServer, &svc.TickerService{TDClient: tdinfo})
 	protos.RegisterChainServiceServer(grpcServer, &svc.ChainService{TDClient: tdinfo})
 	protos.RegisterTradeServiceServer(grpcServer, &svc.TradeService{TDClient: tdinfo})
@@ -77,6 +104,7 @@ func main() {
 	auth_svc := &svc.AuthService{TDClient: tdinfo, AuthStore: auth_store}
 	protos.RegisterAuthServiceServer(grpcServer, auth_svc)
 
+	pubsub := createPubsubClient()
 	streamer_svc := svc.NewStreamerService(tdinfo, pubsub)
 	streamer_svc.TopicsFolder = *topics_folder
 	protos.RegisterStreamerServiceServer(grpcServer, streamer_svc)

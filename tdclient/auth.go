@@ -1,122 +1,60 @@
 package tdclient
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/panyam/goutils/utils"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
-	"os"
-	"path"
 	"strings"
+	"tdproxy/db"
+	"tdproxy/models"
 	"time"
 )
 
 type Auth struct {
-	models.Auth
+	*models.Auth
 	wsUrl       *url.URL
 	credentials utils.StringMap
 }
 
 type AuthStore struct {
-	RootDir  string
-	auths    map[string]*Auth
+	authdb   db.AuthDB
 	lastAuth *Auth
 }
 
 /**
  * Creates a new auth store.
  */
-func NewAuthStore(rootdir string) *AuthStore {
-	fmt.Println("Client Root Dir: ", rootdir)
-	out := &AuthStore{RootDir: rootdir}
-	os.MkdirAll(rootdir, 0777)
-	out.Reload()
-	return out
+func NewAuthStore(authdb db.AuthDB) *AuthStore {
+	return &AuthStore{authdb: authdb}
 }
 
 /**
  * Checks if a particular client id is authenticated.
  */
 func (a *AuthStore) IsAuthenticated(client_id string) bool {
-	if _, err := a.Reload(); err != nil {
-		log.Println("Error loading auth tokens")
+	auth, err := a.authdb.EnsureAuth(client_id)
+	if auth == nil || err != nil {
 		return false
 	}
-	if auth, ok := a.auths[client_id]; ok && auth != nil {
-		return auth.IsAuthenticated()
+	res := auth.IsAuthenticated()
+	if res {
+		a.lastAuth = &Auth{Auth: auth}
 	}
-	return false
+	return res
 }
 
-func (a *AuthStore) TokensFilePath() string {
-	return path.Join(a.RootDir, "tokens")
-}
-
-/**
- * Persistes auth tokens to file so it can be used later on.
- */
-func (a *AuthStore) SaveTokens() (err error) {
-	log.Println("Saving tokens...")
-	defer log.Println("Finished Saved Tokens, err: ", err)
-	auths := make(utils.StringMap)
-	for key, value := range a.auths {
-		auths[key] = value.ToJson()
-	}
-	var marshalled []byte
-	marshalled, err = json.MarshalIndent(auths, "", "  ")
+func (a *AuthStore) EnsureAuth(client_id string, callback_url string) (*Auth, error) {
+	auth, err := a.authdb.EnsureAuth(client_id)
 	if err != nil {
-		log.Printf("Could not marshall token: %+v", a.auths)
-		return err
+		return nil, err
 	}
-	err = os.WriteFile(a.TokensFilePath(), marshalled, 0777)
-	return err
-}
-
-/**
- * Reloads the auth store contents.
- */
-func (a *AuthStore) Reload() (auths map[string]*Auth, err error) {
-	auths = make(map[string]*Auth)
-	contents, err := os.ReadFile(a.TokensFilePath())
-	if err != nil {
-		log.Println(err)
-		return auths, err
-	}
-	tokens, err := utils.JsonDecodeBytes(contents)
-	if err != nil {
-		log.Println(err)
-		return auths, err
-	}
-	entries := tokens.(utils.StringMap)
-	for clientId, entry := range entries {
-		clientInfo := entry.(utils.StringMap)
-		callback_url := clientInfo["callback_url"]
-		auth := a.EnsureAuth(clientId, callback_url.(string))
-		auth.FromJson(clientInfo)
-	}
-	fmt.Println("Loaded auth tokens: ", entries)
-	return auths, nil
-}
-
-/**
- * Creates a new auth object and adds to the store.
- */
-func (a *AuthStore) EnsureAuth(client_id string, callback_url string) (auth *Auth) {
-	auth, ok := a.auths[client_id]
-	if !ok || auth == nil {
-		auth = &Auth{ClientId: client_id, CallbackUrl: callback_url}
-		if a.auths == nil {
-			a.auths = make(map[string]*Auth)
-		}
-		a.auths[client_id] = auth
-	}
-	auth.ClientId = client_id
 	auth.CallbackUrl = callback_url
-	a.lastAuth = auth
-	return
+	return &Auth{
+		Auth: auth,
+	}, nil
 }
 
 func (a *AuthStore) LastAuth() *Auth {
@@ -129,38 +67,12 @@ const (
 	TDAMT_USER_PRINCIPALS_URL = "https://api.tdameritrade.com/v1/userprincipals"
 )
 
-func (a *Auth) ToJson() utils.StringMap {
-	out := make(utils.StringMap)
-	out["client_id"] = a.ClientId
-	out["callback_url"] = a.CallbackUrl
-	out["auth_token"] = a.authToken
-	out["user_principals"] = a.userPrincipals
-	return out
-}
-
-func (auth *Auth) FromJson(json utils.StringMap) {
-	if json != nil {
-		auth.ClientId = json["client_id"].(string)
-		auth.CallbackUrl = json["callback_url"].(string)
-		if val, ok := json["auth_token"]; ok && val != nil {
-			auth.authToken = val.(utils.StringMap)
-		}
-		if val, ok := json["user_principals"]; ok && val != nil {
-			auth.userPrincipals = val.(utils.StringMap)
-		}
-	}
-}
-
 func (auth *Auth) Bearer() string {
-	return fmt.Sprintf("Bearer %s", auth.GetAccessToken())
+	return fmt.Sprintf("Bearer %s", auth.AccessToken())
 }
 
-func (auth *Auth) GetAccessToken() string {
-	access_token := auth.authToken["access_token"]
-	if access_token == nil {
-		return ""
-	}
-	return access_token.(string)
+func (a *AuthStore) SaveAuth(auth *Auth) (err error) {
+	return a.authdb.SaveAuth(auth.Auth)
 }
 
 func (auth *Auth) StartAuthUrl() string {
@@ -174,8 +86,8 @@ func (auth *Auth) CompleteAuth(code string) (err error) {
 	defer func() {
 		log.Println("Completed auth, err: ", err)
 		if err != nil {
-			auth.authToken = nil
-			auth.userPrincipals = nil
+			auth.AuthToken = nil
+			auth.UserPrincipals = nil
 		}
 	}()
 	// decoded := code
@@ -218,11 +130,12 @@ func (auth *Auth) CompleteAuth(code string) (err error) {
 		fmt.Println("Invalid response json: ", err)
 		return err
 	}
+	now := time.Now().UTC()
 	tokenmap := token.(utils.StringMap)
 	expires_in := time.Duration(tokenmap["expires_in"].(float64))
-	auth.ExpiresAt = time.Now().UTC().Add(expires_in * time.Second)
+	auth.ExpiresAt = now.Add(expires_in * time.Second)
 	log.Println("Now, ExpiresIn, ExpiresAt: ", now, expires_in, auth.ExpiresAt)
-	auth.authToken = tokenmap
+	auth.AuthToken = tokenmap
 	return err
 }
 
@@ -230,38 +143,22 @@ func (auth *Auth) CompleteAuth(code string) (err error) {
 //			Things related to streaming API and user principals
 ////////////////////////////////////////////////////////////////////////
 
-func (auth *Auth) UserPrincipals() (utils.StringMap, error) {
-	if auth.userPrincipals == nil {
+func (auth *Auth) EnsureUserPrincipals() (utils.StringMap, error) {
+	if auth.UserPrincipals == nil {
 		if !auth.IsAuthenticated() {
 			return nil, fmt.Errorf("TD Client needs auth or tokens refreshed")
 		}
 		var err error
-		if auth.userPrincipals == nil {
-			auth.userPrincipals, err = auth.FetchUserPrincipals()
-			if err != nil || auth.userPrincipals["error"] != nil {
-				auth.userPrincipals = nil
-				log.Print("Error getting user principals: ", err, auth.userPrincipals)
+		if auth.UserPrincipals == nil {
+			auth.UserPrincipals, err = auth.FetchUserPrincipals()
+			if err != nil || auth.UserPrincipals["error"] != nil {
+				auth.UserPrincipals = nil
+				log.Print("Error getting user principals: ", err, auth.UserPrincipals)
 				return nil, err
 			}
 		}
 	}
-	return auth.userPrincipals, nil
-}
-
-func (auth *Auth) IsAuthenticated() bool {
-	if auth.authToken == nil {
-		return false
-	}
-	expires_at_str := auth.authToken["expires_at"]
-	if expires_at_str == nil {
-		return false
-	}
-	expires_at := utils.ParseTime(expires_at_str.(string))
-	now := time.Now().UTC()
-	if now.Sub(expires_at) >= 0 {
-		return false
-	}
-	return true
+	return auth.UserPrincipals, nil
 }
 
 func (auth *Auth) FetchUserPrincipals() (utils.StringMap, error) {
@@ -283,7 +180,7 @@ func (auth *Auth) FetchUserPrincipals() (utils.StringMap, error) {
  */
 func (auth *Auth) StreamingCredentials() (utils.StringMap, error) {
 	if auth.credentials == nil {
-		userPrincipals, err := auth.UserPrincipals()
+		userPrincipals, err := auth.EnsureUserPrincipals()
 		if err != nil {
 			return nil, err
 		}
@@ -291,7 +188,7 @@ func (auth *Auth) StreamingCredentials() (utils.StringMap, error) {
 		if err != nil {
 			return nil, err
 		}
-		streamerInfo := auth.userPrincipals["streamerInfo"].(utils.StringMap)
+		streamerInfo := auth.UserPrincipals["streamerInfo"].(utils.StringMap)
 		auth.wsUrl = &url.URL{
 			Scheme: "wss",
 			Host:   streamerInfo["streamerSocketUrl"].(string),

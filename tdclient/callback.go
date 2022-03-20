@@ -25,12 +25,14 @@ func (c *CallbackHandler) Start() (err error) {
 		log.Printf("Query: %s", req.URL.Query())
 		code := req.URL.Query().Get("code")
 		log.Printf("Code: %s", code)
+		log.Println("Before CompleteAuth: ", c.TDClient.Auth)
 		err := c.TDClient.Auth.CompleteAuth(code)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Println("CompleteAuthError: ", err)
 		} else {
-			c.AuthStore.SaveTokens()
+			log.Println("CompleteAuth Success: ", c.TDClient.Auth)
+			c.AuthStore.SaveAuth(c.TDClient.Auth)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 			json.NewEncoder(w).Encode(c.TDClient.Auth.ToJson())

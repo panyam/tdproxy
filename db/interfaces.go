@@ -5,9 +5,9 @@ import (
 	"time"
 )
 
-type AuthStore interface {
-	EnsureAuth(client_id string, callback_url string) *models.Auth
-	SaveTokens()
+type AuthDB interface {
+	EnsureAuth(client_id string) (*models.Auth, error)
+	SaveAuth(auth *models.Auth) error
 }
 
 type ChainDB interface {

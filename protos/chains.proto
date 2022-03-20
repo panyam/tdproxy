@@ -8,7 +8,14 @@ message Option {
   string date_string = 2;
   string price_string = 3;
   bool is_call = 4;
-  google.protobuf.Struct info = 5;
+  double strike_price = 5;
+  double ask_price = 6;
+  double bid_price = 7;
+  double mark_price = 8;
+  int32 open_interest = 9;
+  double delta = 10;
+  double multiplier = 11;
+  google.protobuf.Struct info = 12;
 }
 
 message Chain {

@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path"
+	dbtu "tdproxy/db"
 	"tdproxy/models"
 	"testing"
 	"time"
@@ -48,9 +49,10 @@ func TestTickerSaveAndGet(t *testing.T) {
 		now,
 		info.(map[string]interface{}),
 	)
-	db.SaveTicker(ticker)
+	err = db.SaveTicker(ticker)
+	assert.Equal(t, err, nil, "SaveTicker Error should be nil")
 
 	loaded, err := db.GetTicker("SYM")
 	assert.Equal(t, err, nil, "Should be able to load ticker")
-	assert.Equal(t, loaded, &ticker, "Saved ticker should be same due to caching")
+	dbtu.AssertTickersEqual(t, loaded, ticker)
 }

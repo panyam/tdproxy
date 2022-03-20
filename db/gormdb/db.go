@@ -8,6 +8,43 @@ import (
 	"time"
 )
 
+type AuthDB struct {
+	db *gorm.DB
+}
+
+func NewAuthDB(db *gorm.DB) *AuthDB {
+	return &AuthDB{
+		db: db,
+	}
+}
+
+func (authdb *AuthDB) EnsureAuth(client_id string) (auth *models.Auth, err error) {
+	auth, err = authdb.GetAuth(client_id)
+	if err == nil && auth == nil {
+		// Does not exist so create
+		auth = &models.Auth{ClientId: client_id}
+		err = authdb.SaveAuth(auth)
+	}
+	return
+}
+
+func (db *AuthDB) GetAuth(client_id string) (*models.Auth, error) {
+	var out models.Auth
+	err := db.db.First(&out, "client_id = ?", client_id).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		} else {
+			return nil, err
+		}
+	}
+	return &out, err
+}
+
+func (authdb *AuthDB) SaveAuth(auth *models.Auth) error {
+	return authdb.db.Save(auth).Error
+}
+
 type OptionDB struct {
 	db *gorm.DB
 }

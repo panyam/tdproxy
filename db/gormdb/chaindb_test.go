@@ -51,9 +51,10 @@ func TestChainSaveAndGet(t *testing.T) {
 		dbp.MakeTestOptions("SYM", TEST_DATE, true, 10, 100, 10, 50, 10),
 	)
 	chain.LastRefreshedAt = now
-	db.SaveChain(chain)
+	err := db.SaveChain(chain)
+	assert.Equal(t, err, nil, "SaveChain Error should be nil")
 
 	loaded, err := db.GetChain("SYM", TEST_DATE, true)
 	assert.Equal(t, err, nil, "Error should be nil")
-	assert.Equal(t, loaded, chain, "Saved chain should be same due to caching")
+	dbp.AssertChainsEqual(t, loaded, chain)
 }

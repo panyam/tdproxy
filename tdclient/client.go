@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"path"
 	"strings"
 	"tdproxy/db"
 	"tdproxy/models"
@@ -37,7 +36,6 @@ func NewClient(rootdir string, chain_db db.ChainDB, ticker_db db.TickerDB) *Clie
 	os.MkdirAll(rootdir, 0777)
 	out.chain_db = chain_db
 	out.ticker_db = ticker_db
-	// out.db = db.NewDB(path.Join(rootdir, "quotedb"))
 	out.DefaultTickerRefresh = 1800
 	out.DefaultChainRefresh = 1800
 	return out
@@ -47,18 +45,19 @@ func (td *Client) GetTickers(symbols []string, refresh_type int32) (map[string]*
 	if refresh_type == 0 {
 		refresh_type = td.DefaultTickerRefresh
 	}
-	qdb := td.db
 	var outdated []string
 	tickers := make(map[string]*models.Ticker)
 	now := time.Now().UTC()
 	for _, sym := range symbols {
-		ticker := ticker_db.GetTicker(sym)
-		if ticker == nil {
-			outdated = append(outdated, sym)
-		} else if utils.NeedsRefresh(refresh_type, ticker.LastRefreshedAt, now) {
-			outdated = append(outdated, sym)
-		} else {
-			tickers[sym] = ticker
+		ticker, err := td.ticker_db.GetTicker(sym)
+		if err == nil {
+			if ticker == nil {
+				outdated = append(outdated, sym)
+			} else if utils.NeedsRefresh(refresh_type, ticker.LastRefreshedAt, now) {
+				outdated = append(outdated, sym)
+			} else {
+				tickers[sym] = ticker
+			}
 		}
 	}
 
@@ -78,7 +77,7 @@ func (td *Client) GetTickers(symbols []string, refresh_type int32) (map[string]*
 	return tickers, err
 }
 
-func (td *Client) GetChainInfo(symbol string, refresh_type int32) (*models.TickerChainInfo, error) {
+func (td *Client) GetChainInfo(symbol string, refresh_type int32) (*models.ChainInfo, error) {
 	if refresh_type == 0 {
 		refresh_type = td.DefaultChainRefresh
 	}
@@ -103,13 +102,12 @@ func (td *Client) GetChain(symbol string, date string, is_call bool, refresh_typ
 		refresh_type = td.DefaultChainRefresh
 	}
 	date = strings.Replace(date, "-", "_", -1)
-	qdb := td.db
 	now := time.Now().UTC()
-	chain = qchain_db.GetChain(symbol, date, is_call)
+	chain, err = td.chain_db.GetChain(symbol, date, is_call)
 	if chain == nil || utils.NeedsRefresh(refresh_type, chain.LastRefreshedAt, now) {
 		err = td.FetchChain(symbol, date, is_call)
 		if err == nil {
-			chain = qchain_db.GetChain(symbol, date, is_call)
+			chain, err = td.chain_db.GetChain(symbol, date, is_call)
 			if chain == nil {
 				chtype := "PUT"
 				if is_call {

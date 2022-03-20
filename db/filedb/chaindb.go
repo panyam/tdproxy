@@ -2,6 +2,7 @@ package filedb
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/panyam/goutils/utils"
 	"io/ioutil"
@@ -136,16 +137,16 @@ func (db *ChainDB) GetChainInfo(symbol string) (*models.ChainInfo, error) {
 	return out, nil
 }
 
-func (db *ChainDB) GetChain(symbol string, date string, is_call bool) *models.Chain {
+func (db *ChainDB) GetChain(symbol string, date string, is_call bool) (*models.Chain, error) {
 	chain_key := db.ChainKeyFor(symbol, date, is_call)
 	if val, ok := db.chainCache[chain_key]; ok {
-		return val
+		return val, nil
 	}
 
 	// Get folder when call and put chains exist
 	chain_folder, err := db.ChainPathForSymbol(symbol, date, false)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	chtype := chainTypeFor(is_call)
@@ -159,7 +160,7 @@ func (db *ChainDB) GetChain(symbol string, date string, is_call bool) *models.Ch
 	var json_data map[string]interface{}
 	if err := decoder.Decode(&json_data); err != nil {
 		log.Fatal("Invalid error decoding json: ", err)
-		return nil
+		return nil, err
 	}
 
 	var last_refreshed_at time.Time = time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC)
@@ -168,11 +169,11 @@ func (db *ChainDB) GetChain(symbol string, date string, is_call bool) *models.Ch
 	}
 	options_by_price, ok := json_data["chain"].(map[string]interface{})
 	if !ok {
-		return nil
+		return nil, errors.New("Cannot find options by price")
 	}
 	chain := models.ChainFromDict(symbol, date, is_call, options_by_price, last_refreshed_at)
 	db.chainCache[chain_key] = chain
-	return chain
+	return chain, nil
 }
 
 func (db *ChainDB) SaveChain(chain *models.Chain) error {

@@ -83,7 +83,7 @@ func (s *Socket) UserPrincipals() (utils.StringMap, error) {
 	if s.TDClient.Auth == nil {
 		return nil, NotAuthenticated
 	}
-	return s.TDClient.Auth.UserPrincipals()
+	return s.TDClient.Auth.EnsureUserPrincipals()
 }
 
 /**
@@ -298,7 +298,7 @@ func (s *Socket) start_writer() error {
  * Get the login command payload.
  */
 func (s *Socket) LoginCommand() (utils.StringMap, error) {
-	userPrincipals, err := s.TDClient.Auth.UserPrincipals()
+	userPrincipals, err := s.TDClient.Auth.EnsureUserPrincipals()
 	if err != nil {
 		return nil, err
 	}

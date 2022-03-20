@@ -2,6 +2,7 @@ package filedb
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/panyam/goutils/utils"
 	"log"
@@ -54,21 +55,21 @@ func (db *TickerDB) TickerPathForSymbol(symbol string, ensure bool) (string, err
 	return out, err
 }
 
-func (db *TickerDB) GetTicker(symbol string) *models.Ticker {
+func (db *TickerDB) GetTicker(symbol string) (*models.Ticker, error) {
 	ticker_key := symbol
 	if val, ok := db.tickerCache[ticker_key]; ok {
-		return val
+		return val, nil
 	}
 
 	ticker_path, err := db.TickerPathForSymbol(symbol, false)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	// Load from file
 	data, err := utils.JsonDecodeFile(ticker_path)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	json_data := data.(map[string]interface{})
@@ -78,13 +79,13 @@ func (db *TickerDB) GetTicker(symbol string) *models.Ticker {
 	}
 	ticker_info, ok := json_data["ticker"].(map[string]interface{})
 	if !ok {
-		return nil
+		return nil, errors.New("Cannot find ticker info in json")
 	}
 	ticker := models.Ticker{Symbol: symbol,
 		LastRefreshedAt: last_refreshed_at,
 		Info:            ticker_info}
 	db.tickerCache[ticker_key] = &ticker
-	return &ticker
+	return &ticker, nil
 }
 
 func (db *TickerDB) SaveTicker(ticker *models.Ticker) error {

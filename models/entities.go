@@ -15,27 +15,65 @@ type Auth struct {
 	CreatedAt      time.Time `gorm:"autoCreateTime"`
 	UpdatedAt      time.Time `gorm:"autoUpdateTime"`
 	ExpiresAt      time.Time
-	authToken      utils.StringMap
-	userPrincipals utils.StringMap
+	AuthToken      utils.StringMap
+	UserPrincipals utils.StringMap
 }
 
-type AuthToken struct {
-	AccessToken string
-	Scope       string
-	TokenType   string
+func (a *Auth) ToJson() utils.StringMap {
+	out := make(utils.StringMap)
+	out["client_id"] = a.ClientId
+	out["callback_url"] = a.CallbackUrl
+	out["auth_token"] = a.AuthToken
+	out["user_principals"] = a.UserPrincipals
+	out["expires_at"] = utils.FormatTime(a.ExpiresAt)
+	return out
+}
+
+func (auth *Auth) FromJson(json utils.StringMap) {
+	if json != nil {
+		auth.ClientId = json["client_id"].(string)
+		auth.CallbackUrl = json["callback_url"].(string)
+		if val, ok := json["auth_token"]; ok && val != nil {
+			auth.AuthToken = val.(utils.StringMap)
+		}
+		if val, ok := json["user_principals"]; ok && val != nil {
+			auth.UserPrincipals = val.(utils.StringMap)
+		}
+		if val, ok := json["expires_at"]; ok && val != nil {
+			auth.ExpiresAt = utils.ParseTime(val.(string))
+		}
+	}
+}
+
+func (auth *Auth) IsAuthenticated() bool {
+	if auth.AuthToken == nil {
+		return false
+	}
+	if auth.ExpiresAt.Sub(time.Now().UTC()) <= 0 {
+		return false
+	}
+	return true
+}
+
+func (auth *Auth) AccessToken() string {
+	access_token := auth.AuthToken["access_token"]
+	if access_token == nil {
+		return ""
+	}
+	return access_token.(string)
 }
 
 type Ticker struct {
 	Symbol          string `gorm:"primaryKey"`
 	LastRefreshedAt time.Time
-	info            map[string]interface{} `gorm:"-"`
+	Info            map[string]interface{} `gorm:"-"`
 }
 
 func NewTicker(symbol string, refreshed_at time.Time, info map[string]interface{}) *Ticker {
 	return &Ticker{
 		Symbol:          symbol,
 		LastRefreshedAt: refreshed_at,
-		info:            info,
+		Info:            info,
 	}
 }
 
@@ -48,10 +86,10 @@ type Option struct {
 	AskPrice     float64
 	BidPrice     float64
 	MarkPrice    float64
-	OpenInterest int
+	OpenInterest int32
 	Delta        float64
 	Multiplier   float64
-	info         map[string]interface{} `gorm:"-"`
+	Info         map[string]interface{} `gorm:"-"`
 }
 
 func NewOption(symbol string, date_string string, price_string string, is_call bool, info map[string]interface{}) *Option {
@@ -65,25 +103,25 @@ func NewOption(symbol string, date_string string, price_string string, is_call b
 }
 
 func (opt *Option) Refresh() *Option {
-	if val, ok := opt.info["ask"]; ok {
+	if val, ok := opt.Info["ask"]; ok {
 		opt.AskPrice = val.(float64)
 	}
-	if val, ok := opt.info["bid"]; ok {
+	if val, ok := opt.Info["bid"]; ok {
 		opt.BidPrice = val.(float64)
 	}
-	if val, ok := opt.info["mark"]; ok {
+	if val, ok := opt.Info["mark"]; ok {
 		opt.MarkPrice = val.(float64)
 	} else {
 		opt.MarkPrice = (opt.AskPrice + opt.BidPrice) / 2
 	}
 
-	if val, ok := opt.info["openInterest"]; ok {
-		opt.OpenInterest = int(val.(float64))
+	if val, ok := opt.Info["openInterest"]; ok {
+		opt.OpenInterest = int32(val.(float64))
 	}
-	if val, ok := opt.info["delta"]; ok {
+	if val, ok := opt.Info["delta"]; ok {
 		opt.Delta = val.(float64)
 	}
-	if val, ok := opt.info["multiplier"]; ok {
+	if val, ok := opt.Info["multiplier"]; ok {
 		opt.Multiplier = val.(float64)
 	}
 	if opt.StrikePrice <= 0 {
@@ -128,7 +166,7 @@ func ChainFromDict(symbol string, date string, is_call bool,
 			DateString:  date,
 			IsCall:      is_call,
 			PriceString: price_string,
-			info:        detail,
+			Info:        detail,
 		}
 		options = append(options, option.Refresh())
 	}
