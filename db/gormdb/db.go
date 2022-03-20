@@ -20,7 +20,12 @@ func NewAuthDB(db *gorm.DB) *AuthDB {
 }
 
 func (a *AuthDB) LastAuth() *models.Auth {
-	return nil
+	var out models.Auth
+	err := a.db.First(&out).Error
+	if err != nil {
+		return nil
+	}
+	return &out
 }
 
 func (authdb *AuthDB) EnsureAuth(client_id string) (auth *models.Auth, err error) {

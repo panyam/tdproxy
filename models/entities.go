@@ -3,6 +3,8 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/panyam/goutils/utils"
+	"gorm.io/gorm"
 	"log"
 	"sort"
 	"strconv"
@@ -161,4 +163,28 @@ func (chain *Chain) SortOptions() *Chain {
 		return a.StrikePrice < b.StrikePrice
 	})
 	return chain
+}
+
+func (ticker *Ticker) AfterFind(tx *gorm.DB) (err error) {
+	// Updated Stuff from json fields
+	var res interface{}
+	if ticker.InfoJson != nil {
+		res, err = utils.JsonDecodeBytes(ticker.InfoJson)
+		if err == nil && res != nil {
+			ticker.Info = res.(utils.StringMap)
+		}
+	}
+	return nil
+}
+
+func (option *Option) AfterFind(tx *gorm.DB) (err error) {
+	// Updated Stuff from json fields
+	var res interface{}
+	if option.InfoJson != nil {
+		res, err = utils.JsonDecodeBytes(option.InfoJson)
+		if err == nil && res != nil {
+			option.Info = res.(utils.StringMap)
+		}
+	}
+	return nil
 }

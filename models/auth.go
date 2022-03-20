@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"github.com/panyam/goutils/utils"
+	"gorm.io/gorm"
 	"time"
 )
 
@@ -82,4 +83,22 @@ func (auth *Auth) AccessToken() string {
 		return ""
 	}
 	return access_token.(string)
+}
+
+func (auth *Auth) AfterFind(tx *gorm.DB) (err error) {
+	// Updated Stuff from json fields
+	var res interface{}
+	if auth.UserPrincipalsJson != nil {
+		res, err = utils.JsonDecodeBytes(auth.UserPrincipalsJson)
+		if err == nil && res != nil {
+			auth.userPrincipals = res.(utils.StringMap)
+		}
+	}
+	if auth.AuthTokenJson != nil {
+		res, err = utils.JsonDecodeBytes(auth.AuthTokenJson)
+		if err == nil && res != nil {
+			auth.authToken = res.(utils.StringMap)
+		}
+	}
+	return nil
 }
