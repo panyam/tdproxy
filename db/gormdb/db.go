@@ -13,6 +13,7 @@ type AuthDB struct {
 }
 
 func NewAuthDB(db *gorm.DB) *AuthDB {
+	db.AutoMigrate(&models.Auth{})
 	return &AuthDB{
 		db: db,
 	}

@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"log"
 	// "fmt"
 	"github.com/panyam/goutils/utils"
 	structpb "google.golang.org/protobuf/types/known/structpb"
@@ -19,6 +20,7 @@ func (s *TickerService) GetTickers(ctx context.Context, request *protos.GetTicke
 	if request.RefreshType != nil {
 		refresh_type = *request.RefreshType
 	}
+	log.Println("Fetching Tickers: ", request.Symbols)
 	tickers, err := s.TDClient.GetTickers(request.Symbols, refresh_type)
 	resp := &protos.GetTickersResponse{
 		Errors:  make(map[string]string),

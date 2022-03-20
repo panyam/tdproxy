@@ -91,8 +91,8 @@ func (auth *Auth) CompleteAuth(code string) (err error) {
 	defer func() {
 		log.Println("Completed auth, err: ", err)
 		if err != nil {
-			auth.AuthToken = nil
-			auth.UserPrincipals = nil
+			auth.SetAuthToken(nil)
+			auth.SetUserPrincipals(nil)
 		}
 	}()
 	// decoded := code
@@ -140,7 +140,7 @@ func (auth *Auth) CompleteAuth(code string) (err error) {
 	expires_in := time.Duration(tokenmap["expires_in"].(float64))
 	auth.ExpiresAt = now.Add(expires_in * time.Second)
 	log.Println("Now, ExpiresIn, ExpiresAt: ", now, expires_in, auth.ExpiresAt)
-	auth.AuthToken = tokenmap
+	auth.SetAuthToken(tokenmap)
 	return err
 }
 
@@ -148,22 +148,23 @@ func (auth *Auth) CompleteAuth(code string) (err error) {
 //			Things related to streaming API and user principals
 ////////////////////////////////////////////////////////////////////////
 
-func (auth *Auth) EnsureUserPrincipals() (utils.StringMap, error) {
-	if auth.UserPrincipals == nil {
+func (auth *Auth) EnsureUserPrincipals() error {
+	if auth.UserPrincipals() == nil {
 		if !auth.IsAuthenticated() {
-			return nil, fmt.Errorf("TD Client needs auth or tokens refreshed")
+			return fmt.Errorf("TD Client needs auth or tokens refreshed")
 		}
-		var err error
-		if auth.UserPrincipals == nil {
-			auth.UserPrincipals, err = auth.FetchUserPrincipals()
-			if err != nil || auth.UserPrincipals["error"] != nil {
-				auth.UserPrincipals = nil
+		if auth.UserPrincipals() == nil {
+			up, err := auth.FetchUserPrincipals()
+			if err != nil || up["error"] != nil {
+				auth.SetUserPrincipals(nil)
 				log.Print("Error getting user principals: ", err, auth.UserPrincipals)
-				return nil, err
+				return err
+			} else {
+				auth.SetUserPrincipals(up)
 			}
 		}
 	}
-	return auth.UserPrincipals, nil
+	return nil
 }
 
 func (auth *Auth) FetchUserPrincipals() (utils.StringMap, error) {
@@ -183,17 +184,17 @@ func (auth *Auth) FetchUserPrincipals() (utils.StringMap, error) {
  * This method also checks that a valid login/auth is available and
  * will try to refresh any tokens if required before failing on errors.
  */
-func (auth *Auth) StreamingCredentials() (utils.StringMap, error) {
+func (auth *Auth) StreamingCredentials() (creds utils.StringMap, err error) {
 	if auth.credentials == nil {
-		userPrincipals, err := auth.EnsureUserPrincipals()
+		if err = auth.EnsureUserPrincipals(); err != nil {
+			return nil, err
+		}
+		up := auth.UserPrincipals()
+		auth.credentials, err = CredentialsFromPrincipal(up)
 		if err != nil {
 			return nil, err
 		}
-		auth.credentials, err = CredentialsFromPrincipal(userPrincipals)
-		if err != nil {
-			return nil, err
-		}
-		streamerInfo := auth.UserPrincipals["streamerInfo"].(utils.StringMap)
+		streamerInfo := up["streamerInfo"].(utils.StringMap)
 		auth.wsUrl = &url.URL{
 			Scheme: "wss",
 			Host:   streamerInfo["streamerSocketUrl"].(string),

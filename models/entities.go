@@ -1,8 +1,8 @@
 package models
 
 import (
+	"encoding/json"
 	"fmt"
-	"github.com/panyam/goutils/utils"
 	"log"
 	"sort"
 	"strconv"
@@ -10,71 +10,20 @@ import (
 	"time"
 )
 
-type Auth struct {
-	ClientId       string `gorm:"primaryKey"`
-	CallbackUrl    string
-	CreatedAt      time.Time `gorm:"autoCreateTime"`
-	UpdatedAt      time.Time `gorm:"autoUpdateTime"`
-	ExpiresAt      time.Time
-	AuthToken      utils.StringMap
-	UserPrincipals utils.StringMap
-}
-
-func (a *Auth) ToJson() utils.StringMap {
-	out := make(utils.StringMap)
-	out["client_id"] = a.ClientId
-	out["callback_url"] = a.CallbackUrl
-	out["auth_token"] = a.AuthToken
-	out["user_principals"] = a.UserPrincipals
-	out["expires_at"] = utils.FormatTime(a.ExpiresAt)
-	return out
-}
-
-func (auth *Auth) FromJson(json utils.StringMap) {
-	if json != nil {
-		auth.ClientId = json["client_id"].(string)
-		auth.CallbackUrl = json["callback_url"].(string)
-		if val, ok := json["auth_token"]; ok && val != nil {
-			auth.AuthToken = val.(utils.StringMap)
-		}
-		if val, ok := json["user_principals"]; ok && val != nil {
-			auth.UserPrincipals = val.(utils.StringMap)
-		}
-		if val, ok := json["expires_at"]; ok && val != nil {
-			auth.ExpiresAt = utils.ParseTime(val.(string))
-		}
-	}
-}
-
-func (auth *Auth) IsAuthenticated() bool {
-	if auth.AuthToken == nil {
-		return false
-	}
-	if auth.ExpiresAt.Sub(time.Now().UTC()) <= 0 {
-		return false
-	}
-	return true
-}
-
-func (auth *Auth) AccessToken() string {
-	access_token := auth.AuthToken["access_token"]
-	if access_token == nil {
-		return ""
-	}
-	return access_token.(string)
-}
-
 type Ticker struct {
 	Symbol          string `gorm:"primaryKey"`
 	LastRefreshedAt time.Time
 	Info            map[string]interface{} `gorm:"-"`
+	InfoJson        json.RawMessage
 }
 
 func NewTicker(symbol string, refreshed_at time.Time, info map[string]interface{}) *Ticker {
+	j, _ := json.Marshal(info)
 	return &Ticker{
 		Symbol:          symbol,
 		LastRefreshedAt: refreshed_at,
 		Info:            info,
+		InfoJson:        j,
 	}
 }
 
@@ -91,14 +40,18 @@ type Option struct {
 	Delta        float64
 	Multiplier   float64
 	Info         map[string]interface{} `gorm:"-"`
+	InfoJson     json.RawMessage
 }
 
 func NewOption(symbol string, date_string string, price_string string, is_call bool, info map[string]interface{}) *Option {
+	j, _ := json.Marshal(info)
 	out := &Option{
 		Symbol:      symbol,
 		DateString:  date_string,
 		PriceString: price_string,
 		IsCall:      is_call,
+		Info:        info,
+		InfoJson:    j,
 	}
 	out.Refresh()
 	return out

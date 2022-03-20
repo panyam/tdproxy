@@ -49,15 +49,13 @@ func (td *Client) GetTickers(symbols []string, refresh_type int32) (map[string]*
 	tickers := make(map[string]*models.Ticker)
 	now := time.Now().UTC()
 	for _, sym := range symbols {
-		ticker, err := td.ticker_db.GetTicker(sym)
-		if err == nil {
-			if ticker == nil {
-				outdated = append(outdated, sym)
-			} else if utils.NeedsRefresh(refresh_type, ticker.LastRefreshedAt, now) {
-				outdated = append(outdated, sym)
-			} else {
-				tickers[sym] = ticker
-			}
+		ticker, _ := td.ticker_db.GetTicker(sym)
+		if ticker == nil {
+			outdated = append(outdated, sym)
+		} else if utils.NeedsRefresh(refresh_type, ticker.LastRefreshedAt, now) {
+			outdated = append(outdated, sym)
+		} else {
+			tickers[sym] = ticker
 		}
 	}
 

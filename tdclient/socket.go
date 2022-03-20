@@ -83,7 +83,10 @@ func (s *Socket) UserPrincipals() (utils.StringMap, error) {
 	if s.TDClient.Auth == nil {
 		return nil, NotAuthenticated
 	}
-	return s.TDClient.Auth.EnsureUserPrincipals()
+	if err := s.TDClient.Auth.EnsureUserPrincipals(); err != nil {
+		return nil, err
+	}
+	return s.TDClient.Auth.UserPrincipals(), nil
 }
 
 /**
@@ -298,10 +301,10 @@ func (s *Socket) start_writer() error {
  * Get the login command payload.
  */
 func (s *Socket) LoginCommand() (utils.StringMap, error) {
-	userPrincipals, err := s.TDClient.Auth.EnsureUserPrincipals()
-	if err != nil {
+	if err := s.TDClient.Auth.EnsureUserPrincipals(); err != nil {
 		return nil, err
 	}
+	userPrincipals := s.TDClient.Auth.UserPrincipals()
 	streamerInfo := userPrincipals["streamerInfo"].(utils.StringMap)
 	return s.NewRequest("ADMIN", "LOGIN", true, func(params utils.StringMap) {
 		creds, _ := s.Credentials()
