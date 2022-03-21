@@ -1,9 +1,11 @@
 package gormdb
 
 import (
+	"log"
 	// "gorm.io/driver/sqlite"
 	"errors"
 	"gorm.io/gorm"
+	// "gorm.io/gorm/clause"
 	"tdproxy/models"
 	"time"
 )
@@ -51,8 +53,12 @@ func (db *AuthDB) GetAuth(client_id string) (*models.Auth, error) {
 	return &out, err
 }
 
-func (authdb *AuthDB) SaveAuth(auth *models.Auth) error {
-	return authdb.db.Save(auth).Error
+func (authdb *AuthDB) SaveAuth(auth *models.Auth) (err error) {
+	err = authdb.db.Model(auth).Updates(auth).Error
+	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+		err = authdb.db.Create(auth).Error
+	}
+	return
 }
 
 type OptionDB struct {
@@ -92,8 +98,14 @@ func (db *OptionDB) GetOptions(is_call bool, symbol string, date string) ([]*mod
 /**
  * Save a particular option.
  */
-func (db *OptionDB) SaveOption(option *models.Option) error {
-	return db.db.Save(option).Error
+func (db *OptionDB) SaveOption(option *models.Option) (err error) {
+	result := db.db.Model(option).Updates(option)
+	err = result.Error
+	log.Println("Err: ", err)
+	if err == nil && result.RowsAffected == 0 {
+		err = db.db.Create(option).Error
+	}
+	return
 }
 
 /**
@@ -162,8 +174,22 @@ func (db *ChainDB) GetChain(symbol string, date string, is_call bool) (*models.C
 	return &out, err
 }
 
-func (db *ChainDB) SaveChain(chain *models.Chain) error {
-	return db.db.Save(chain).Error
+func (db *ChainDB) SaveChain(chain *models.Chain) (err error) {
+	options := chain.Options
+	chain, err = db.GetChain(chain.Symbol, chain.DateString, chain.IsCall)
+	if len(options) == 0 && len(chain.Options) > 0 {
+		options = chain.Options
+	}
+	if err == nil {
+		err = db.db.Model(chain).Update("last_refreshed_at", chain.LastRefreshedAt).Error
+		if err == nil {
+			err = db.optiondb.SaveOptions(options)
+			if err != nil {
+				log.Println("Error Saving Options: ", err)
+			}
+		}
+	}
+	return
 }
 
 type TickerDB struct {
@@ -188,6 +214,11 @@ func (db *TickerDB) GetTicker(symbol string) (*models.Ticker, error) {
 	return &out, err
 }
 
-func (db *TickerDB) SaveTicker(ticker *models.Ticker) error {
-	return db.db.Save(ticker).Error
+func (db *TickerDB) SaveTicker(ticker *models.Ticker) (err error) {
+	result := db.db.Model(ticker).Updates(ticker)
+	err = result.Error
+	if err == nil && result.RowsAffected == 0 {
+		err = db.db.Create(ticker).Error
+	}
+	return
 }

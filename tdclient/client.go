@@ -119,6 +119,7 @@ func (td *Client) GetChain(symbol string, date string, is_call bool, refresh_typ
 				}
 			}
 		}
+		log.Println("Error Fetchign Chain: ", err)
 	}
 	return chain, err
 }
@@ -147,11 +148,11 @@ func (td *Client) FetchTickers(symbols []string) (map[string]*models.Ticker, err
 		}
 		now := time.Now().UTC()
 		for sym, ticker_info := range result.(utils.StringMap) {
-			tickers[sym] = &models.Ticker{
-				Symbol:          sym,
-				Info:            ticker_info.(utils.StringMap),
-				LastRefreshedAt: now,
-			}
+			tickers[sym] = models.NewTicker(
+				sym,
+				now,
+				ticker_info.(utils.StringMap),
+			)
 		}
 		symbols = tail
 	}
@@ -162,8 +163,8 @@ func (td *Client) FetchChain(symbol string, date string, is_call bool) error {
 	if td.Auth == nil || !td.Auth.IsAuthenticated() {
 		return NotAuthenticated
 	}
-	log.Printf("Loading chain data from server for %s...", symbol)
 	url := fmt.Sprintf("%s?apikey=%s&symbol=%s", TDAMT_OPT_CHAIN_URL, td.Auth.ClientId, symbol)
+	log.Printf("Loading chain data from server for %s: ", url)
 	result, _, err := utils.JsonGet(url, func(req *http.Request) {
 		req.Header.Set("Authorization", td.Auth.Bearer())
 	})

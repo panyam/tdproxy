@@ -58,7 +58,11 @@ func (s *ChainService) GetChain(ctx context.Context, request *protos.GetChainReq
 }
 
 func OptionToProto(option *models.Option) (*protos.Option, error) {
-	info, err := structpb.NewStruct(option.Info)
+	val, err := option.Info.Value()
+	if err != nil {
+		return nil, err
+	}
+	info, err := structpb.NewStruct(val.(utils.StringMap))
 	if err != nil {
 		return nil, err
 	}

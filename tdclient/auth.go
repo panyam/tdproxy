@@ -39,14 +39,20 @@ func NewAuthStore(authdb db.AuthDB) (a *AuthStore) {
 /**
  * Checks if a particular client id is authenticated.
  */
-func (a *AuthStore) IsAuthenticated(client_id string) bool {
-	auth, err := a.authdb.EnsureAuth(client_id)
+func (a *AuthStore) EnsureAuthenticated(client_id string) bool {
+	auth, err := a.EnsureAuth(client_id, "")
 	if auth == nil || err != nil {
 		return false
 	}
 	res := auth.IsAuthenticated()
 	if res {
-		a.lastAuth = &Auth{Auth: auth}
+		a.lastAuth = auth
+	} else if auth.CanRefreshToken() {
+		if err := auth.RefreshTokens(); err == nil {
+			res = true
+			a.lastAuth = auth
+			a.SaveAuth(auth)
+		}
 	}
 	return res
 }
@@ -56,7 +62,9 @@ func (a *AuthStore) EnsureAuth(client_id string, callback_url string) (*Auth, er
 	if err != nil {
 		return nil, err
 	}
-	auth.CallbackUrl = callback_url
+	if callback_url != "" {
+		auth.CallbackUrl = callback_url
+	}
 	return &Auth{
 		Auth: auth,
 	}, nil
@@ -86,6 +94,52 @@ func (auth *Auth) StartAuthUrl() string {
 	return url
 }
 
+func (auth *Auth) RefreshTokens() (err error) {
+	log.Println("Refreshing Tokens...")
+	defer func() {
+		log.Println("Completed auth, err: ", err)
+		if err != nil {
+			auth.SetUserPrincipals(nil)
+		}
+	}()
+	form := url.Values{}
+	form.Add("grant_type", "refresh_token")
+	form.Add("refresh_token", auth.AuthToken()["refresh_token"].(string))
+	form.Add("client_id", auth.ClientId)
+	form.Add("redirect_uri", auth.CallbackUrl)
+	fmt.Println("Form: ", form)
+	var postreq *http.Request
+	postreq, err = http.NewRequest("POST", TDAMT_TOKEN_URL, strings.NewReader(form.Encode()))
+	postreq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	client := &http.Client{}
+	var response *http.Response
+	response, err = client.Do(postreq)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+
+	fmt.Println("Refresh Tokens Response Status:", response.Status)
+	fmt.Println("Refresh Tokens Response Headers:", response.Header)
+	body, _ := ioutil.ReadAll(response.Body)
+	fmt.Println("response Body:", string(body))
+	if response.StatusCode != 200 {
+		fmt.Println("Failed Response: ", response)
+		return fmt.Errorf(response.Status)
+	}
+
+	// Save it locally now
+	var token interface{}
+	token, err = utils.JsonDecodeBytes(body)
+	if err != nil {
+		fmt.Println("Invalid response json: ", err)
+		return err
+	}
+	auth.SetAuthToken(token.(utils.StringMap))
+	return err
+}
+
 func (auth *Auth) CompleteAuth(code string) (err error) {
 	log.Println("Completing Auth...")
 	defer func() {
@@ -104,6 +158,7 @@ func (auth *Auth) CompleteAuth(code string) (err error) {
 	form := url.Values{}
 	form.Add("grant_type", "authorization_code")
 	form.Add("client_id", auth.ClientId)
+	form.Add("access_type", "offline")
 	form.Add("redirect_uri", auth.CallbackUrl)
 	form.Add("code", decoded)
 	fmt.Println("Form: ", form)
@@ -135,12 +190,7 @@ func (auth *Auth) CompleteAuth(code string) (err error) {
 		fmt.Println("Invalid response json: ", err)
 		return err
 	}
-	now := time.Now().UTC()
-	tokenmap := token.(utils.StringMap)
-	expires_in := time.Duration(tokenmap["expires_in"].(float64))
-	auth.ExpiresAt = now.Add(expires_in * time.Second)
-	log.Println("Now, ExpiresIn, ExpiresAt: ", now, expires_in, auth.ExpiresAt)
-	auth.SetAuthToken(tokenmap)
+	auth.SetAuthToken(token.(utils.StringMap))
 	return err
 }
 
@@ -157,7 +207,7 @@ func (auth *Auth) EnsureUserPrincipals() error {
 			up, err := auth.FetchUserPrincipals()
 			if err != nil || up["error"] != nil {
 				auth.SetUserPrincipals(nil)
-				log.Print("Error getting user principals: ", err, auth.UserPrincipals)
+				log.Print("Error getting user principals: ", err, auth.UserPrincipals())
 				return err
 			} else {
 				auth.SetUserPrincipals(up)

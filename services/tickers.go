@@ -27,16 +27,19 @@ func (s *TickerService) GetTickers(ctx context.Context, request *protos.GetTicke
 		Tickers: make(map[string]*protos.Ticker),
 	}
 	for sym, ticker := range tickers {
-		info, err := structpb.NewStruct(ticker.Info)
-		if err != nil {
-			resp.Errors[sym] = err.Error()
+		val, err := ticker.Info.Value()
+		if err == nil {
+			info, err := structpb.NewStruct(val.(utils.StringMap))
+			if err != nil {
+				resp.Errors[sym] = err.Error()
+			}
+			tickerproto := &protos.Ticker{
+				Symbol:          sym,
+				LastRefreshedAt: utils.FormatTime(ticker.LastRefreshedAt),
+				Info:            info,
+			}
+			resp.Tickers[sym] = tickerproto
 		}
-		tickerproto := &protos.Ticker{
-			Symbol:          sym,
-			LastRefreshedAt: utils.FormatTime(ticker.LastRefreshedAt),
-			Info:            info,
-		}
-		resp.Tickers[sym] = tickerproto
 	}
 	return resp, err
 }

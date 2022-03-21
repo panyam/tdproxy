@@ -2,21 +2,23 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/panyam/goutils/utils"
-	"gorm.io/gorm"
+	"log"
 	"time"
 )
 
 type Auth struct {
-	ClientId           string `gorm:"primaryKey"`
-	CallbackUrl        string
-	CreatedAt          time.Time `gorm:"autoCreateTime"`
-	UpdatedAt          time.Time `gorm:"autoUpdateTime"`
-	ExpiresAt          time.Time
-	AuthTokenJson      json.RawMessage
-	UserPrincipalsJson json.RawMessage `gorm:"-"`
-	authToken          utils.StringMap `gorm:"-"`
-	userPrincipals     utils.StringMap `gorm:"-"`
+	ClientId              string `gorm:"primaryKey"`
+	CallbackUrl           string
+	CreatedAt             time.Time `gorm:"autoCreateTime"`
+	UpdatedAt             time.Time `gorm:"autoUpdateTime"`
+	ExpiresAt             time.Time
+	RefreshTokenExpiresAt time.Time
+	AuthTokenJson         json.RawMessage
+	UserPrincipalsJson    json.RawMessage `gorm:"-"`
+	authToken             *Json
+	userPrincipals        *Json
 }
 
 func (a *Auth) ToJson() utils.StringMap {
@@ -26,6 +28,7 @@ func (a *Auth) ToJson() utils.StringMap {
 	out["auth_token"] = a.authToken
 	out["user_principals"] = a.userPrincipals
 	out["expires_at"] = utils.FormatTime(a.ExpiresAt)
+	out["refresh_token_expires_at"] = utils.FormatTime(a.ExpiresAt)
 	return out
 }
 
@@ -42,28 +45,42 @@ func (auth *Auth) FromJson(json utils.StringMap) {
 		if val, ok := json["expires_at"]; ok && val != nil {
 			auth.ExpiresAt = utils.ParseTime(val.(string))
 		}
+		if val, ok := json["refresh_token_expires_at"]; ok && val != nil {
+			auth.RefreshTokenExpiresAt = utils.ParseTime(val.(string))
+		}
 	}
 }
 
 func (auth *Auth) AuthToken() utils.StringMap {
-	return auth.authToken
+	res, err := auth.authToken.Value()
+	if err != nil || res == nil {
+		return nil
+	}
+	return res.(utils.StringMap)
 }
 
 func (auth *Auth) UserPrincipals() utils.StringMap {
-	return auth.userPrincipals
+	res, err := auth.userPrincipals.Value()
+	if err != nil || res == nil {
+		return nil
+	}
+	return res.(utils.StringMap)
 }
 
 func (auth *Auth) SetUserPrincipals(info utils.StringMap) bool {
-	j, _ := json.Marshal(info)
-	auth.userPrincipals = info
-	auth.UserPrincipalsJson = j
+	auth.userPrincipals = NewJson(fmt.Sprintf("auth_%s_up", auth.ClientId), info)
 	return true
 }
 
 func (auth *Auth) SetAuthToken(info utils.StringMap) bool {
-	j, _ := json.Marshal(info)
-	auth.authToken = info
-	auth.AuthTokenJson = j
+	auth.authToken = NewJson(fmt.Sprintf("auth_%s_at", auth.ClientId), info)
+
+	now := time.Now().UTC()
+	expires_in := time.Duration(info["expires_in"].(float64))
+	refresh_token_expires_in := time.Duration(info["refresh_token_expires_in"].(float64))
+	auth.ExpiresAt = now.Add(expires_in * time.Second)
+	auth.RefreshTokenExpiresAt = now.Add(refresh_token_expires_in * time.Second)
+	log.Println("Now, ExpiresIn, ExpiresAt: ", now, expires_in, auth.ExpiresAt)
 	return true
 }
 
@@ -77,28 +94,20 @@ func (auth *Auth) IsAuthenticated() bool {
 	return true
 }
 
+/**
+ * Check if refresh token is valid.
+ */
+func (auth *Auth) CanRefreshToken() bool {
+	if auth.RefreshTokenExpiresAt.Sub(time.Now().UTC()) <= 0 {
+		return false
+	}
+	return true
+}
+
 func (auth *Auth) AccessToken() string {
-	access_token := auth.authToken["access_token"]
+	access_token := auth.AuthToken()["access_token"]
 	if access_token == nil {
 		return ""
 	}
 	return access_token.(string)
-}
-
-func (auth *Auth) AfterFind(tx *gorm.DB) (err error) {
-	// Updated Stuff from json fields
-	var res interface{}
-	if auth.UserPrincipalsJson != nil {
-		res, err = utils.JsonDecodeBytes(auth.UserPrincipalsJson)
-		if err == nil && res != nil {
-			auth.userPrincipals = res.(utils.StringMap)
-		}
-	}
-	if auth.AuthTokenJson != nil {
-		res, err = utils.JsonDecodeBytes(auth.AuthTokenJson)
-		if err == nil && res != nil {
-			auth.authToken = res.(utils.StringMap)
-		}
-	}
-	return nil
 }
