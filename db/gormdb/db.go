@@ -16,6 +16,8 @@ type AuthDB struct {
 
 func NewAuthDB(db *gorm.DB) *AuthDB {
 	db.AutoMigrate(&models.Auth{})
+	db.AutoMigrate(&models.AuthTokenJsonField{})
+	db.AutoMigrate(&models.UserPrincipalsJsonField{})
 	return &AuthDB{
 		db: db,
 	}
@@ -42,7 +44,7 @@ func (authdb *AuthDB) EnsureAuth(client_id string) (auth *models.Auth, err error
 
 func (db *AuthDB) GetAuth(client_id string) (*models.Auth, error) {
 	var out models.Auth
-	err := db.db.First(&out, "client_id = ?", client_id).Error
+	err := db.db.Preload("UserPrincipals").Preload("AuthToken").First(&out, "client_id = ?", client_id).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -50,12 +52,15 @@ func (db *AuthDB) GetAuth(client_id string) (*models.Auth, error) {
 			return nil, err
 		}
 	}
+	out.AuthToken.Value()
+	out.UserPrincipals.Value()
 	return &out, err
 }
 
 func (authdb *AuthDB) SaveAuth(auth *models.Auth) (err error) {
-	err = authdb.db.Model(auth).Updates(auth).Error
-	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+	result := authdb.db.Model(auth).Updates(auth)
+	err = result.Error
+	if err == nil && result.RowsAffected == 0 {
 		err = authdb.db.Create(auth).Error
 	}
 	return
@@ -67,6 +72,7 @@ type OptionDB struct {
 
 func NewOptionDB(db *gorm.DB) *OptionDB {
 	db.AutoMigrate(&models.Option{})
+	db.AutoMigrate(&models.OptionJsonField{})
 	return &OptionDB{db: db}
 }
 
@@ -101,7 +107,6 @@ func (db *OptionDB) GetOptions(is_call bool, symbol string, date string) ([]*mod
 func (db *OptionDB) SaveOption(option *models.Option) (err error) {
 	result := db.db.Model(option).Updates(option)
 	err = result.Error
-	log.Println("Err: ", err)
 	if err == nil && result.RowsAffected == 0 {
 		err = db.db.Create(option).Error
 	}
@@ -174,22 +179,17 @@ func (db *ChainDB) GetChain(symbol string, date string, is_call bool) (*models.C
 	return &out, err
 }
 
-func (db *ChainDB) SaveChain(chain *models.Chain) (err error) {
-	options := chain.Options
-	chain, err = db.GetChain(chain.Symbol, chain.DateString, chain.IsCall)
-	if len(options) == 0 && len(chain.Options) > 0 {
-		options = chain.Options
+func (db *ChainDB) SaveChain(chain *models.Chain) error {
+	result := db.db.Model(chain).Updates(chain)
+	err := result.Error
+	if err == nil && result.RowsAffected == 0 {
+		err = db.db.Create(chain).Error
 	}
-	if err == nil {
-		err = db.db.Model(chain).Update("last_refreshed_at", chain.LastRefreshedAt).Error
-		if err == nil {
-			err = db.optiondb.SaveOptions(options)
-			if err != nil {
-				log.Println("Error Saving Options: ", err)
-			}
-		}
+	err = db.optiondb.SaveOptions(chain.Options)
+	if err != nil {
+		log.Println("Error Saving Options: ", err)
 	}
-	return
+	return err
 }
 
 type TickerDB struct {
@@ -198,6 +198,7 @@ type TickerDB struct {
 
 func NewTickerDB(db *gorm.DB) *TickerDB {
 	db.AutoMigrate(&models.Ticker{})
+	db.AutoMigrate(&models.TickerJsonField{})
 	return &TickerDB{db: db}
 }
 

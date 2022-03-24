@@ -4,16 +4,24 @@ import (
 	"time"
 )
 
+type TickerJsonField struct {
+	*Json
+	TickerSymbol string
+}
+
 type Ticker struct {
 	Symbol          string `gorm:"primaryKey"`
 	LastRefreshedAt time.Time
-	Info            *Json
+	Info            TickerJsonField // *Json
 }
 
 func NewTicker(symbol string, refreshed_at time.Time, info map[string]interface{}) *Ticker {
 	return &Ticker{
 		Symbol:          symbol,
 		LastRefreshedAt: refreshed_at,
-		Info:            NewJson(symbol, info),
+		Info: TickerJsonField{
+			TickerSymbol: symbol,
+			Json:         NewJson(info),
+		},
 	}
 }

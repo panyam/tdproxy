@@ -86,7 +86,7 @@ func (s *Socket) UserPrincipals() (utils.StringMap, error) {
 	if err := s.TDClient.Auth.EnsureUserPrincipals(); err != nil {
 		return nil, err
 	}
-	return s.TDClient.Auth.UserPrincipals(), nil
+	return s.TDClient.Auth.UserPrincipalsValue(), nil
 }
 
 /**
@@ -304,7 +304,7 @@ func (s *Socket) LoginCommand() (utils.StringMap, error) {
 	if err := s.TDClient.Auth.EnsureUserPrincipals(); err != nil {
 		return nil, err
 	}
-	userPrincipals := s.TDClient.Auth.UserPrincipals()
+	userPrincipals := s.TDClient.Auth.UserPrincipalsValue()
 	streamerInfo := userPrincipals["streamerInfo"].(utils.StringMap)
 	return s.NewRequest("ADMIN", "LOGIN", true, func(params utils.StringMap) {
 		creds, _ := s.Credentials()

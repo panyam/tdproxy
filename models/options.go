@@ -7,6 +7,14 @@ import (
 	"strconv"
 )
 
+type OptionJsonField struct {
+	*Json
+	OptionSymbol      string
+	OptionDateString  string
+	OptionIsCall      bool
+	OptionPriceString string
+}
+
 type Option struct {
 	Symbol       string `gorm:"primaryKey" gorm:"index:ByCallSymbolDate,priority:1"`
 	DateString   string `gorm:"primaryKey" gorm:"index:ByCallSymbolDate,priority:2"`
@@ -19,7 +27,7 @@ type Option struct {
 	OpenInterest int32
 	Delta        float64
 	Multiplier   float64
-	Info         *Json
+	Info         OptionJsonField // *Json
 }
 
 func NewOption(symbol string, date_string string, price_string string, is_call bool, info map[string]interface{}) *Option {
@@ -28,8 +36,14 @@ func NewOption(symbol string, date_string string, price_string string, is_call b
 		DateString:  date_string,
 		PriceString: price_string,
 		IsCall:      is_call,
+		Info: OptionJsonField{
+			Json:              NewJson(info),
+			OptionSymbol:      symbol,
+			OptionDateString:  date_string,
+			OptionIsCall:      is_call,
+			OptionPriceString: price_string,
+		},
 	}
-	out.Info = NewJson(out.ShortKey(), info)
 	out.Refresh()
 	return out
 }

@@ -1,32 +1,36 @@
 package models
 
 import (
-	"encoding/json"
-	"fmt"
 	"github.com/panyam/goutils/utils"
 	"log"
 	"time"
 )
 
+type AuthTokenJsonField struct {
+	*Json
+	AuthClientId string
+}
+
+type UserPrincipalsJsonField struct {
+	*Json
+	AuthClientId string
+}
+
 type Auth struct {
 	ClientId              string `gorm:"primaryKey"`
 	CallbackUrl           string
-	CreatedAt             time.Time `gorm:"autoCreateTime"`
-	UpdatedAt             time.Time `gorm:"autoUpdateTime"`
 	ExpiresAt             time.Time
 	RefreshTokenExpiresAt time.Time
-	AuthTokenJson         json.RawMessage
-	UserPrincipalsJson    json.RawMessage `gorm:"-"`
-	authToken             *Json
-	userPrincipals        *Json
+	AuthToken             AuthTokenJsonField
+	UserPrincipals        UserPrincipalsJsonField
 }
 
 func (a *Auth) ToJson() utils.StringMap {
 	out := make(utils.StringMap)
 	out["client_id"] = a.ClientId
 	out["callback_url"] = a.CallbackUrl
-	out["auth_token"] = a.authToken
-	out["user_principals"] = a.userPrincipals
+	out["auth_token"] = a.AuthTokenValue()
+	out["user_principals"] = a.UserPrincipalsValue()
 	out["expires_at"] = utils.FormatTime(a.ExpiresAt)
 	out["refresh_token_expires_at"] = utils.FormatTime(a.ExpiresAt)
 	return out
@@ -51,16 +55,16 @@ func (auth *Auth) FromJson(json utils.StringMap) {
 	}
 }
 
-func (auth *Auth) AuthToken() utils.StringMap {
-	res, err := auth.authToken.Value()
+func (auth *Auth) AuthTokenValue() utils.StringMap {
+	res, err := auth.AuthToken.Value()
 	if err != nil || res == nil {
 		return nil
 	}
 	return res.(utils.StringMap)
 }
 
-func (auth *Auth) UserPrincipals() utils.StringMap {
-	res, err := auth.userPrincipals.Value()
+func (auth *Auth) UserPrincipalsValue() utils.StringMap {
+	res, err := auth.UserPrincipals.Value()
 	if err != nil || res == nil {
 		return nil
 	}
@@ -68,12 +72,20 @@ func (auth *Auth) UserPrincipals() utils.StringMap {
 }
 
 func (auth *Auth) SetUserPrincipals(info utils.StringMap) bool {
-	auth.userPrincipals = NewJson(fmt.Sprintf("auth_%s_up", auth.ClientId), info)
+	// auth.userPrincipals = NewJson(fmt.Sprintf("auth_%s_up", auth.ClientId), info)
+	auth.UserPrincipals = UserPrincipalsJsonField{
+		AuthClientId: auth.ClientId,
+		Json:         NewJson(info),
+	}
 	return true
 }
 
 func (auth *Auth) SetAuthToken(info utils.StringMap) bool {
-	auth.authToken = NewJson(fmt.Sprintf("auth_%s_at", auth.ClientId), info)
+	auth.AuthToken = AuthTokenJsonField{
+		AuthClientId: auth.ClientId,
+		Json:         NewJson(info),
+	}
+	// auth.authToken = NewJson(fmt.Sprintf("auth_%s_at", auth.ClientId), info)
 
 	now := time.Now().UTC()
 	expires_in := time.Duration(info["expires_in"].(float64))
@@ -85,7 +97,7 @@ func (auth *Auth) SetAuthToken(info utils.StringMap) bool {
 }
 
 func (auth *Auth) IsAuthenticated() bool {
-	if auth.authToken == nil {
+	if !auth.AuthToken.HasValue() {
 		return false
 	}
 	if auth.ExpiresAt.Sub(time.Now().UTC()) <= 0 {
@@ -105,7 +117,7 @@ func (auth *Auth) CanRefreshToken() bool {
 }
 
 func (auth *Auth) AccessToken() string {
-	access_token := auth.AuthToken()["access_token"]
+	access_token := auth.AuthTokenValue()["access_token"]
 	if access_token == nil {
 		return ""
 	}

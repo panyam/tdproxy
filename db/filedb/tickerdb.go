@@ -81,9 +81,14 @@ func (db *TickerDB) GetTicker(symbol string) (*models.Ticker, error) {
 	if !ok {
 		return nil, errors.New("Cannot find ticker info in json")
 	}
-	ticker := models.Ticker{Symbol: symbol,
+	ticker := models.Ticker{
+		Symbol:          symbol,
 		LastRefreshedAt: last_refreshed_at,
-		Info:            ticker_info}
+		Info: models.TickerJsonField{
+			TickerSymbol: symbol,
+			Json:         models.NewJson(ticker_info),
+		},
+	}
 	db.tickerCache[ticker_key] = &ticker
 	return &ticker, nil
 }

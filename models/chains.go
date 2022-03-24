@@ -41,7 +41,10 @@ func ChainFromDict(symbol string, date string, is_call bool,
 			IsCall:      is_call,
 			PriceString: price_string,
 		}
-		option.Info = NewJson(option.ShortKey(), detail)
+		option.Info = OptionJsonField{
+			OptionSymbol: symbol,
+			Json:         NewJson(detail),
+		}
 		if !option.Refresh() {
 			log.Println("Refresh failed: ", option)
 		} else {

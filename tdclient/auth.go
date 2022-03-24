@@ -104,7 +104,7 @@ func (auth *Auth) RefreshTokens() (err error) {
 	}()
 	form := url.Values{}
 	form.Add("grant_type", "refresh_token")
-	form.Add("refresh_token", auth.AuthToken()["refresh_token"].(string))
+	form.Add("refresh_token", auth.AuthTokenValue()["refresh_token"].(string))
 	form.Add("client_id", auth.ClientId)
 	form.Add("redirect_uri", auth.CallbackUrl)
 	fmt.Println("Form: ", form)
@@ -199,15 +199,15 @@ func (auth *Auth) CompleteAuth(code string) (err error) {
 ////////////////////////////////////////////////////////////////////////
 
 func (auth *Auth) EnsureUserPrincipals() error {
-	if auth.UserPrincipals() == nil {
+	if auth.UserPrincipalsValue() == nil {
 		if !auth.IsAuthenticated() {
 			return fmt.Errorf("TD Client needs auth or tokens refreshed")
 		}
-		if auth.UserPrincipals() == nil {
+		if auth.UserPrincipalsValue() == nil {
 			up, err := auth.FetchUserPrincipals()
 			if err != nil || up["error"] != nil {
 				auth.SetUserPrincipals(nil)
-				log.Print("Error getting user principals: ", err, auth.UserPrincipals())
+				log.Print("Error getting user principals: ", err, auth.UserPrincipalsValue())
 				return err
 			} else {
 				auth.SetUserPrincipals(up)
@@ -239,7 +239,7 @@ func (auth *Auth) StreamingCredentials() (creds utils.StringMap, err error) {
 		if err = auth.EnsureUserPrincipals(); err != nil {
 			return nil, err
 		}
-		up := auth.UserPrincipals()
+		up := auth.UserPrincipalsValue()
 		auth.credentials, err = CredentialsFromPrincipal(up)
 		if err != nil {
 			return nil, err
