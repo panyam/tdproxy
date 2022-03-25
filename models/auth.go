@@ -8,12 +8,12 @@ import (
 
 type AuthTokenJsonField struct {
 	*Json
-	AuthClientId string
+	AuthClientId string `gorm:"primaryKey"`
 }
 
 type UserPrincipalsJsonField struct {
 	*Json
-	AuthClientId string
+	AuthClientId string `gorm:"primaryKey"`
 }
 
 type Auth struct {

@@ -6,7 +6,7 @@ import (
 
 type TickerJsonField struct {
 	*Json
-	TickerSymbol string
+	TickerSymbol string `gorm:"primaryKey"`
 }
 
 type Ticker struct {

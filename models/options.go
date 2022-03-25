@@ -9,10 +9,10 @@ import (
 
 type OptionJsonField struct {
 	*Json
-	OptionSymbol      string
-	OptionDateString  string
-	OptionIsCall      bool
-	OptionPriceString string
+	OptionSymbol      string `gorm:"primaryKey"`
+	OptionDateString  string `gorm:"primaryKey"`
+	OptionIsCall      bool   `gorm:"primaryKey"`
+	OptionPriceString string `gorm:"primaryKey"`
 }
 
 type Option struct {

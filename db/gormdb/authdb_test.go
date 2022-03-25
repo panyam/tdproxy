@@ -62,7 +62,7 @@ func TestSaveAuth(t *testing.T) {
 
 	auth.CallbackUrl = "http://hello.world.com"
 	a1 := map[string]interface{}{
-		"a":                        1,
+		"a":                        float64(11),
 		"b":                        "hello",
 		"c":                        true,
 		"expires_in":               60.0,
@@ -71,7 +71,7 @@ func TestSaveAuth(t *testing.T) {
 	auth.SetAuthToken(a1)
 
 	b1 := map[string]interface{}{
-		"x": 42,
+		"x": float64(42),
 		"y": "world",
 		"z": false,
 	}
@@ -83,6 +83,8 @@ func TestSaveAuth(t *testing.T) {
 	fetched, err := db.GetAuth("testclient1")
 	assert.Equal(t, err, nil, "GetAuth should succeed")
 	assert.NotEqual(t, fetched, nil, "GetAuth should succeed")
+	auth.AuthToken.LastUpdatedAt = fetched.AuthToken.LastUpdatedAt
+	auth.UserPrincipals.LastUpdatedAt = fetched.UserPrincipals.LastUpdatedAt
 	log.Println("Saved: ", auth)
 	log.Println("Fetched: ", fetched)
 	assert.Equal(t, auth, fetched, "Saved and Fetched auth should be equal")

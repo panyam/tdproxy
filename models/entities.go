@@ -9,8 +9,9 @@ import (
 var InvalidJsonKeyError = errors.New("InvalidJsonKeyError")
 
 type Json struct {
-	ValueJson string
-	value     interface{}
+	ValueJson     string
+	LastUpdatedAt int64 `gorm:"autoUpdateTime:milli"`
+	value         interface{}
 }
 
 func NewJson(value interface{}) *Json {
