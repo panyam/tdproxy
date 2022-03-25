@@ -119,7 +119,9 @@ func (td *Client) GetChain(symbol string, date string, is_call bool, refresh_typ
 				}
 			}
 		}
-		log.Println("Error Fetchign Chain: ", err)
+		if err != nil {
+			log.Println("Error Fetching Chain: ", err)
+		}
 	}
 	return chain, err
 }
@@ -173,6 +175,7 @@ func (td *Client) FetchChain(symbol string, date string, is_call bool) error {
 	}
 	calls, puts, err := group_chains_by_date(result.(utils.StringMap), time.Now().UTC())
 	if err != nil {
+		log.Println("Json Error: ", result)
 		return err
 	}
 	for _, entry := range calls {

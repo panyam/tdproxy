@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"github.com/panyam/goutils/utils"
 	structpb "google.golang.org/protobuf/types/known/structpb"
 	"log"
@@ -12,7 +13,8 @@ import (
 
 type ChainService struct {
 	protos.UnimplementedChainServiceServer
-	TDClient *tdclient.Client
+	TDClient  *tdclient.Client
+	AuthStore *tdclient.AuthStore
 }
 
 func (s *ChainService) GetChainInfo(ctx context.Context, request *protos.GetChainInfoRequest) (*protos.GetChainInfoResponse, error) {
@@ -32,6 +34,9 @@ func (s *ChainService) GetChainInfo(ctx context.Context, request *protos.GetChai
 }
 
 func (s *ChainService) GetChain(ctx context.Context, request *protos.GetChainRequest) (*protos.GetChainResponse, error) {
+	if !s.AuthStore.EnsureAuthenticated(s.AuthStore.LastAuth().ClientId) {
+		return nil, errors.New("Not authenticated.  Call StartLogin first")
+	}
 	resp := &protos.GetChainResponse{}
 	refresh_type := int32(0)
 	if request.RefreshType != nil {
@@ -44,29 +49,22 @@ func (s *ChainService) GetChain(ctx context.Context, request *protos.GetChainReq
 			Date:            request.Date,
 			IsCall:          request.IsCall,
 			LastRefreshedAt: utils.FormatTime(chain.LastRefreshedAt),
-			Options:         make([]*protos.Option, len(chain.Options)),
 		}
-		for i, option := range chain.Options {
+		for _, option := range chain.Options {
 			opt, err := OptionToProto(option)
 			if err != nil {
 				panic(err)
 			}
-			resp.Chain.Options[i] = opt
+			if opt != nil {
+				resp.Chain.Options = append(resp.Chain.Options, opt)
+			}
 		}
 	}
 	return resp, err
 }
 
 func OptionToProto(option *models.Option) (*protos.Option, error) {
-	val, err := option.Info.Value()
-	if err != nil {
-		return nil, err
-	}
-	info, err := structpb.NewStruct(val.(utils.StringMap))
-	if err != nil {
-		return nil, err
-	}
-	return &protos.Option{
+	out := &protos.Option{
 		Symbol:       option.Symbol,
 		DateString:   option.DateString,
 		PriceString:  option.PriceString,
@@ -77,6 +75,13 @@ func OptionToProto(option *models.Option) (*protos.Option, error) {
 		Multiplier:   option.Multiplier,
 		Delta:        option.Delta,
 		OpenInterest: option.OpenInterest,
-		Info:         info,
-	}, nil
+	}
+	val, err := option.Info.Value()
+	if err == nil && val != nil {
+		out.Info, err = structpb.NewStruct(val.(utils.StringMap))
+	}
+	if err != nil {
+		log.Println("Error parsing info: ", err)
+	}
+	return out, nil
 }

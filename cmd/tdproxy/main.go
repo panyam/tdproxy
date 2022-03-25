@@ -98,8 +98,8 @@ func main() {
 	go callbackHandler.Start()
 
 	grpcServer := grpc.NewServer()
-	protos.RegisterTickerServiceServer(grpcServer, &svc.TickerService{TDClient: tdinfo})
-	protos.RegisterChainServiceServer(grpcServer, &svc.ChainService{TDClient: tdinfo})
+	protos.RegisterTickerServiceServer(grpcServer, &svc.TickerService{TDClient: tdinfo, AuthStore: auth_store})
+	protos.RegisterChainServiceServer(grpcServer, &svc.ChainService{TDClient: tdinfo, AuthStore: auth_store})
 	protos.RegisterTradeServiceServer(grpcServer, &svc.TradeService{TDClient: tdinfo})
 
 	auth_svc := &svc.AuthService{TDClient: tdinfo, AuthStore: auth_store}

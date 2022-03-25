@@ -25,7 +25,7 @@ func NewAuthDB(db *gorm.DB) *AuthDB {
 
 func (a *AuthDB) LastAuth() *models.Auth {
 	var out models.Auth
-	err := a.db.First(&out).Error
+	err := a.db.Preload("UserPrincipals").Preload("AuthToken").First(&out).Error
 	if err != nil {
 		return nil
 	}
@@ -34,6 +34,7 @@ func (a *AuthDB) LastAuth() *models.Auth {
 
 func (authdb *AuthDB) EnsureAuth(client_id string) (auth *models.Auth, err error) {
 	auth, err = authdb.GetAuth(client_id)
+	log.Println("Err, out: ", err, auth)
 	if err == nil && auth == nil {
 		// Does not exist so create
 		auth = &models.Auth{ClientId: client_id}

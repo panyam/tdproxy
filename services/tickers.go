@@ -12,7 +12,8 @@ import (
 
 type TickerService struct {
 	protos.UnimplementedTickerServiceServer
-	TDClient *tdclient.Client
+	TDClient  *tdclient.Client
+	AuthStore *tdclient.AuthStore
 }
 
 func (s *TickerService) GetTickers(ctx context.Context, request *protos.GetTickersRequest) (*protos.GetTickersResponse, error) {

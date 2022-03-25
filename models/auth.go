@@ -89,10 +89,14 @@ func (auth *Auth) SetAuthToken(info utils.StringMap) bool {
 
 	now := time.Now().UTC()
 	expires_in := time.Duration(info["expires_in"].(float64))
-	refresh_token_expires_in := time.Duration(info["refresh_token_expires_in"].(float64))
 	auth.ExpiresAt = now.Add(expires_in * time.Second)
-	auth.RefreshTokenExpiresAt = now.Add(refresh_token_expires_in * time.Second)
-	log.Println("Now, ExpiresIn, ExpiresAt: ", now, expires_in, auth.ExpiresAt)
+	if val, ok := info["refresh_token_expires_in"]; ok && val != nil {
+		refresh_token_expires_in := time.Duration(val.(float64))
+		auth.RefreshTokenExpiresAt = now.Add(refresh_token_expires_in * time.Second)
+	}
+	log.Println("Now, ExpiresIn, ExpiresAt: ",
+		now, expires_in, auth.ExpiresAt,
+		auth.RefreshTokenExpiresAt)
 	return true
 }
 
