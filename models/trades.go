@@ -55,7 +55,7 @@ type Trade struct {
 	TradeId            string `gorm:"primaryKey"`
 	Symbol             string `gorm:"index:BySymbol,priority:1"`
 	Date               string `gorm:"index:ByDate,priority:1" gorm:"index:ByDateAndGain,priority:1" gorm:"index:ByDateAndGainProb,priority:1"`
-	StrategyName       string
+	Strategy           string
 	PayoffExpectedGain float64 `gorm:"index:ByDateAndGain,priority:2"`
 	PayoffExpectedLoss float64
 	PayoffGainProb     float64 `gorm:"index:ByDateAndGainProb,priority:2"`
@@ -107,7 +107,7 @@ func (t *Trade) ToJson() utils.StringMap {
 	out["id"] = t.TradeId
 	out["sym"] = t.Symbol
 	out["date"] = t.Date
-	out["strategy"] = t.StrategyName
+	out["strategy"] = t.Strategy
 	out["metadata"] = t.Metadata
 	out["payoff"] = utils.StringMap{
 		"expected_gain": t.PayoffExpectedGain,

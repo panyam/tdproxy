@@ -32,7 +32,7 @@ message Trade {
   string trade_id = 1;
   string symbol = 2;
   string date = 3;
-  string strategy_name = 4;
+  string strategy = 4;
   repeated Order orders = 5;
   google.protobuf.Struct metadata = 6;
 
@@ -64,27 +64,27 @@ message TradeFilter {
   /**
    * Which symbol trades are being filtered on.
    */
-  repeated string filter_by_symbols = 1;
+  repeated string by_symbols = 1;
 
   /**
    * Return trades on a particular date.
    */
-  repeated string filter_by_date = 2;
+  repeated string by_date = 2;
 
   /**
    * Return trades for a particular strategy.
    */
-  repeated string filter_by_strategy = 3;
+  repeated string by_strategy = 3;
 
   /**
    * Filter by trades with atleast this gain probability.
    */
-  repeated double filter_min_gain = 4;
+  double min_gain = 4;
 
   /**
    * Filter by trades with atleast this much payoff.
    */
-  repeated double filter_min_profit = 5;
+  double min_profit = 5;
 }
 
 message ListTradesRequest {

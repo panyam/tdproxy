@@ -19,9 +19,19 @@ func (s *TradeService) SaveTrades(ctx context.Context, request *protos.SaveTrade
 }
 
 func (s *TradeService) RemoveTrades(ctx context.Context, request *protos.RemoveTradesRequest) (resp *protos.RemoveTradesResponse, err error) {
-	keys := s.TradeDB.FilterTrades(request.FilterBy)
-	for _, tid := range keys {
-		err = s.TradeDB.RemoveTrade(tid)
+	trades, err := s.TradeDB.FilterTrades(
+		request.FilterBy.BySymbols,
+		request.FilterBy.ByDate,
+		request.FilterBy.ByStrategy,
+		request.FilterBy.MinGain,
+		request.FilterBy.MinProfit,
+		[]string{},
+	)
+	if err != nil {
+		return nil, err
+	}
+	for _, trade := range trades {
+		err = s.TradeDB.RemoveTrade(trade.TradeId)
 	}
 	return
 }

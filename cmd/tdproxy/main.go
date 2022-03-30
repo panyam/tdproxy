@@ -12,6 +12,7 @@ import (
 	"gorm.io/gorm"
 	"log"
 	"net"
+	"path"
 	"strconv"
 	"strings"
 	"tdproxy/config"
@@ -37,7 +38,7 @@ var (
 	topic_endpoint    = flag.String("topic_endpoint", fmt.Sprintf("%d", pslconfig.DefaultServerPort()), "End point where topics can be published and subscribed to")
 	topics_folder     = flag.String("topics_folder", "~/.tdroot/topics", "End point where topics can be published and subscribed to")
 	db_endpoint       = flag.String("db_endpoint", "file://~/.tdroot", "Endpoint of DB to use")
-	trade_db_endpoint = flag.String("tradesdb_endpoint", "file://~/.tdroot/trades", "Endpoint of trades DB")
+	trade_db_endpoint = flag.String("tradesdb_endpoint", "~/.tdroot/trades", "Endpoint of trades DB")
 )
 
 func createPubsubClient() *cli.PubSub {
@@ -60,12 +61,23 @@ func createPubsubClient() *cli.PubSub {
 	return pubsub
 }
 
-func getDBs() (authdb db.AuthDB, tickerdb db.TickerDB, chaindb db.ChainDB, tradedb db.TradeDB) {
-	opt := badger.DefaultOptions(*trade_db_endpoint)
+func getTradeDB() *db.TradeDB {
+	tdbroot := path.Join(utils.ExpandUserPath(*tdroot), "tradedb")
+	indexfile := path.Join(tdbroot, "index.db")
+	tradesdir := path.Join(tdbroot, "trades")
+	indexdb, err := gorm.Open(sqlite.Open(indexfile), &gorm.Config{})
+	if err != nil {
+		log.Panic(err)
+	}
+	opt := badger.DefaultOptions(tradesdir)
 	tradedb, err := badger.Open(opt)
 	if err != nil {
 		log.Fatal("Could not open tradedb: ", err)
 	}
+	return db.NewTradeDB(tradedb, indexdb)
+}
+
+func getDBs() (authdb db.AuthDB, tickerdb db.TickerDB, chaindb db.ChainDB) {
 	if strings.HasPrefix(*db_endpoint, "file://") {
 		dbpath := utils.ExpandUserPath((*db_endpoint)[len("file://"):])
 		authdb = filedb.NewAuthDB(dbpath)
@@ -83,12 +95,13 @@ func getDBs() (authdb db.AuthDB, tickerdb db.TickerDB, chaindb db.ChainDB, trade
 	} else {
 		log.Panic("Invalid db_endpoint: ", *db_endpoint)
 	}
-	return authdb, tickerdb, chaindb, tradedb
+	return authdb, tickerdb, chaindb
 }
 
 func main() {
 	flag.Parse()
-	authdb, tickerdb, chaindb, tradedb := getDBs()
+	authdb, tickerdb, chaindb := getDBs()
+	tradedb := getTradeDB()
 	// see if we need to start the pubsub endpoint locally
 	auth_store := tdclient.NewAuthStore(authdb)
 	if *client_id != "" && *callback_url != "" {
@@ -107,7 +120,7 @@ func main() {
 	grpcServer := grpc.NewServer()
 	protos.RegisterTickerServiceServer(grpcServer, &svc.TickerService{TDClient: tdinfo, AuthStore: auth_store})
 	protos.RegisterChainServiceServer(grpcServer, &svc.ChainService{TDClient: tdinfo, AuthStore: auth_store})
-	protos.RegisterTradeServiceServer(grpcServer, &svc.TradeService{TDClient: tdinfo})
+	protos.RegisterTradeServiceServer(grpcServer, &svc.TradeService{TradeDB: tradedb})
 
 	auth_svc := &svc.AuthService{TDClient: tdinfo, AuthStore: auth_store}
 	protos.RegisterAuthServiceServer(grpcServer, auth_svc)
