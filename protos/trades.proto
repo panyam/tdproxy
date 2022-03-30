@@ -4,40 +4,43 @@ import "google/protobuf/struct.proto";
 option go_package = "tdproxy/protos";
 package protos;
 
+message OrderBase {
+  bool buy = 1;
+  int32 quantity = 2;
+  double overridden_premium = 3;
+}
+
 message Single {
-  string option_key = 1;
+  OrderBase order_base = 1;
+  string option_key = 2;
 }
 
 message Spread {
-  string name = 1;
-  string short_name = 2;
+  OrderBase order_base = 1;
+  string name = 2;
   repeated Single singles = 3;
 }
 
 message Order {
-  bool is_buy = 1;
-  int32 quantity = 2;
-  float overridden_premium  = 3;
   oneof details {
-    Single single = 4;
-    Spread spread = 5;
+    Single single = 1;
+    Spread spread = 2;
   }
 }
 
 message Trade {
   string trade_id = 1;
   string symbol = 2;
-  string cretaed_at = 3;
+  string date = 3;
   string strategy_name = 4;
   repeated Order orders = 5;
   google.protobuf.Struct metadata = 6;
 
   // Payoffs that user can provide
-  float payoff_expected_gain = 7;
-  float payoff_expected_loss = 8;
-  float payoff_gain_prob = 9;
-  float payoff_gain_loss = 10;
-  float payoff_bpe = 11;
+  double payoff_expected_gain = 7;
+  double payoff_expected_loss = 8;
+  double payoff_gain_prob = 9;
+  double payoff_bpe = 10;
 }
 
 service TradeService {
@@ -76,12 +79,12 @@ message TradeFilter {
   /**
    * Filter by trades with atleast this gain probability.
    */
-  repeated float filter_min_gain = 4;
+  repeated double filter_min_gain = 4;
 
   /**
    * Filter by trades with atleast this much payoff.
    */
-  repeated float filter_min_profit = 5;
+  repeated double filter_min_profit = 5;
 }
 
 message ListTradesRequest {

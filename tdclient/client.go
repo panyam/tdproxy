@@ -166,7 +166,8 @@ func (td *Client) FetchChain(symbol string, date string, is_call bool) error {
 		return NotAuthenticated
 	}
 	url := fmt.Sprintf("%s?apikey=%s&symbol=%s", TDAMT_OPT_CHAIN_URL, td.Auth.ClientId, symbol)
-	log.Printf("Loading chain data from server for %s: ", url)
+	// log.Printf("Loading chain data from server for %s: ", url)
+	// log.Printf("Bearer Auth: %s", td.Auth.Bearer())
 	result, _, err := utils.JsonGet(url, func(req *http.Request) {
 		req.Header.Set("Authorization", td.Auth.Bearer())
 	})
@@ -203,6 +204,9 @@ func group_chains_by_date(chain_json utils.StringMap, refreshed_at time.Time) (
 	map[string]*models.Chain,
 	map[string]*models.Chain,
 	error) {
+	if chain_json["error"] != nil {
+		return nil, nil, errors.New(chain_json["error"].(string))
+	}
 	if chain_json["symbol"] == nil {
 		return nil, nil, InvalidChainJson
 	}

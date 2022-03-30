@@ -25,13 +25,11 @@ func (c *CallbackHandler) Start() (err error) {
 		log.Printf("Query: %s", req.URL.Query())
 		code := req.URL.Query().Get("code")
 		log.Printf("Code: %s", code)
-		log.Println("Before CompleteAuth: ", c.TDClient.Auth)
 		err := c.TDClient.Auth.CompleteAuth(code)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
 			log.Println("CompleteAuthError: ", err)
+			w.WriteHeader(http.StatusInternalServerError)
 		} else {
-			log.Println("CompleteAuth Success: ", c.TDClient.Auth)
 			c.AuthStore.SaveAuth(c.TDClient.Auth)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
@@ -40,9 +38,7 @@ func (c *CallbackHandler) Start() (err error) {
 	})
 	http.Handle("/callback", handler)
 	http.Handle("/callback/", handler)
-	log.Printf("Callback Handler Certificate file: %s\n", c.CertFile)
-	log.Printf("Callback Handler Private key file: %s\n", c.PKeyFile)
-	log.Printf("Running callback handler on part %d", c.Port)
+	log.Printf("Running Callback Handler on Port: %d, Certificate file: %s, PKey File: %s\n", c.Port, c.CertFile, c.PKeyFile)
 	if err = http.ListenAndServeTLS(fmt.Sprintf(":%d", c.Port), c.CertFile, c.PKeyFile, nil); err != nil {
 		log.Fatal("Cannot start HTTPS callback handler: ", err)
 	}

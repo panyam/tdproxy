@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	badger "github.com/dgraph-io/badger/v3"
 	"github.com/panyam/goutils/utils"
 	"github.com/panyam/pslite/cli"
 	pslconfig "github.com/panyam/pslite/config"
@@ -26,16 +27,17 @@ const TEST_CALLBACK_URL = "https://localhost:8000/callback"
 const TEST_CLIENT_ID = ""
 
 var (
-	port           = flag.Int("port", config.DefaultServerPort(), "Port on which gRPC server should listen TCP conn.")
-	tdroot         = flag.String("tdroot", "~/.tdroot", "Root location of where TD data is downloaded too")
-	client_id      = flag.String("client_id", TEST_CLIENT_ID, "TD Ameritrade Client ID")
-	callback_port  = flag.Int("callback_port", config.DefaultCallbackPort(), "Port on which OAuth Callback handler listen on.")
-	callback_url   = flag.String("callback_url", TEST_CALLBACK_URL, "TD Ameritrade Auth Callback URl")
-	callback_cert  = flag.String("callback_cert", "./tdclient/server.crt", "Certificate file for SSL Callback handler")
-	callback_pkey  = flag.String("callback_pkey", "./tdclient/server.key", "Private key file for SSL Callback handler")
-	topic_endpoint = flag.String("topic_endpoint", fmt.Sprintf("%d", pslconfig.DefaultServerPort()), "End point where topics can be published and subscribed to")
-	topics_folder  = flag.String("topics_folder", "~/.tdroot/topics", "End point where topics can be published and subscribed to")
-	db_endpoint    = flag.String("db_endpoint", "file://~/.tdroot", "Endpoint of DB to use")
+	port              = flag.Int("port", config.DefaultServerPort(), "Port on which gRPC server should listen TCP conn.")
+	tdroot            = flag.String("tdroot", "~/.tdroot", "Root location of where TD data is downloaded too")
+	client_id         = flag.String("client_id", TEST_CLIENT_ID, "TD Ameritrade Client ID")
+	callback_port     = flag.Int("callback_port", config.DefaultCallbackPort(), "Port on which OAuth Callback handler listen on.")
+	callback_url      = flag.String("callback_url", TEST_CALLBACK_URL, "TD Ameritrade Auth Callback URl")
+	callback_cert     = flag.String("callback_cert", "./tdclient/server.crt", "Certificate file for SSL Callback handler")
+	callback_pkey     = flag.String("callback_pkey", "./tdclient/server.key", "Private key file for SSL Callback handler")
+	topic_endpoint    = flag.String("topic_endpoint", fmt.Sprintf("%d", pslconfig.DefaultServerPort()), "End point where topics can be published and subscribed to")
+	topics_folder     = flag.String("topics_folder", "~/.tdroot/topics", "End point where topics can be published and subscribed to")
+	db_endpoint       = flag.String("db_endpoint", "file://~/.tdroot", "Endpoint of DB to use")
+	trade_db_endpoint = flag.String("tradesdb_endpoint", "file://~/.tdroot/trades", "Endpoint of trades DB")
 )
 
 func createPubsubClient() *cli.PubSub {
@@ -58,7 +60,12 @@ func createPubsubClient() *cli.PubSub {
 	return pubsub
 }
 
-func getDBs() (authdb db.AuthDB, tickerdb db.TickerDB, chaindb db.ChainDB) {
+func getDBs() (authdb db.AuthDB, tickerdb db.TickerDB, chaindb db.ChainDB, tradedb db.TradeDB) {
+	opt := badger.DefaultOptions(*trade_db_endpoint)
+	tradedb, err := badger.Open(opt)
+	if err != nil {
+		log.Fatal("Could not open tradedb: ", err)
+	}
 	if strings.HasPrefix(*db_endpoint, "file://") {
 		dbpath := utils.ExpandUserPath((*db_endpoint)[len("file://"):])
 		authdb = filedb.NewAuthDB(dbpath)
@@ -76,12 +83,12 @@ func getDBs() (authdb db.AuthDB, tickerdb db.TickerDB, chaindb db.ChainDB) {
 	} else {
 		log.Panic("Invalid db_endpoint: ", *db_endpoint)
 	}
-	return authdb, tickerdb, chaindb
+	return authdb, tickerdb, chaindb, tradedb
 }
 
 func main() {
 	flag.Parse()
-	authdb, tickerdb, chaindb := getDBs()
+	authdb, tickerdb, chaindb, tradedb := getDBs()
 	// see if we need to start the pubsub endpoint locally
 	auth_store := tdclient.NewAuthStore(authdb)
 	if *client_id != "" && *callback_url != "" {
@@ -115,4 +122,5 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	grpcServer.Serve(lis)
+	defer tradedb.Close()
 }

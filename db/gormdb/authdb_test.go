@@ -25,6 +25,10 @@ func CreateTestAuthDB(t *testing.T, filepath string) (*AuthDB, string) {
 
 		filepath = path.Join(dir, "test.db")
 	}
+	// Always remove DB if it exists
+	if _, err := os.Stat(filepath); err == nil {
+		os.Remove(filepath)
+	}
 	db, err := gorm.Open(sqlite.Open(filepath), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
@@ -51,7 +55,7 @@ func TestAuthEnsureAuth(t *testing.T) {
 func TestSaveAuth(t *testing.T) {
 	db, dbroot := CreateTestAuthDB(t, "/tmp/sq.db")
 	if dbroot != "" {
-		defer os.RemoveAll(dbroot)
+		// defer os.RemoveAll(dbroot)
 	}
 
 	auth, err := db.EnsureAuth("testclient1")
@@ -71,9 +75,11 @@ func TestSaveAuth(t *testing.T) {
 	auth.SetAuthToken(a1)
 
 	b1 := map[string]interface{}{
-		"x": float64(42),
-		"y": "world",
-		"z": false,
+		"x":                        float64(42),
+		"y":                        "world",
+		"z":                        false,
+		"expires_in":               200.0,
+		"refresh_token_expires_in": 20.0,
 	}
 	auth.SetUserPrincipals(b1)
 
@@ -85,7 +91,18 @@ func TestSaveAuth(t *testing.T) {
 	assert.NotEqual(t, fetched, nil, "GetAuth should succeed")
 	auth.AuthToken.LastUpdatedAt = fetched.AuthToken.LastUpdatedAt
 	auth.UserPrincipals.LastUpdatedAt = fetched.UserPrincipals.LastUpdatedAt
-	log.Println("Saved: ", auth)
-	log.Println("Fetched: ", fetched)
+	assert.Equal(t, auth, fetched, "Saved and Fetched auth should be equal")
+
+	// Update the value to see if things change
+	auth.SetUserPrincipals(a1)
+	auth.SetAuthToken(b1)
+
+	err = db.SaveAuth(auth)
+	assert.Equal(t, err, nil, "Updated should succeed")
+	fetched, err = db.GetAuth("testclient1")
+	assert.Equal(t, err, nil, "GetAuth should succeed")
+	assert.NotEqual(t, fetched, nil, "GetAuth should succeed")
+	auth.AuthToken.LastUpdatedAt = fetched.AuthToken.LastUpdatedAt
+	auth.UserPrincipals.LastUpdatedAt = fetched.UserPrincipals.LastUpdatedAt
 	assert.Equal(t, auth, fetched, "Saved and Fetched auth should be equal")
 }

@@ -4,9 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/panyam/goutils/utils"
-	structpb "google.golang.org/protobuf/types/known/structpb"
 	"log"
-	"tdproxy/models"
 	"tdproxy/protos"
 	"tdproxy/tdclient"
 )
@@ -61,27 +59,4 @@ func (s *ChainService) GetChain(ctx context.Context, request *protos.GetChainReq
 		}
 	}
 	return resp, err
-}
-
-func OptionToProto(option *models.Option) (*protos.Option, error) {
-	out := &protos.Option{
-		Symbol:       option.Symbol,
-		DateString:   option.DateString,
-		PriceString:  option.PriceString,
-		IsCall:       option.IsCall,
-		AskPrice:     option.AskPrice,
-		BidPrice:     option.BidPrice,
-		MarkPrice:    option.MarkPrice,
-		Multiplier:   option.Multiplier,
-		Delta:        option.Delta,
-		OpenInterest: option.OpenInterest,
-	}
-	val, err := option.Info.Value()
-	if err == nil && val != nil {
-		out.Info, err = structpb.NewStruct(val.(utils.StringMap))
-	}
-	if err != nil {
-		log.Println("Error parsing info: ", err)
-	}
-	return out, nil
 }
