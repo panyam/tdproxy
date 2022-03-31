@@ -37,7 +37,7 @@ var (
 	callback_pkey     = flag.String("callback_pkey", "./tdclient/server.key", "Private key file for SSL Callback handler")
 	topic_endpoint    = flag.String("topic_endpoint", fmt.Sprintf("%d", pslconfig.DefaultServerPort()), "End point where topics can be published and subscribed to")
 	topics_folder     = flag.String("topics_folder", "~/.tdroot/topics", "End point where topics can be published and subscribed to")
-	db_endpoint       = flag.String("db_endpoint", "file://~/.tdroot", "Endpoint of DB to use")
+	db_endpoint       = flag.String("db_endpoint", "sqlite://~/.tdroot/sqlite.db", "Endpoint of DB to use")
 	trade_db_endpoint = flag.String("tradesdb_endpoint", "~/.tdroot/trades", "Endpoint of trades DB")
 )
 

@@ -103,6 +103,7 @@ func (td *Client) GetChain(symbol string, date string, is_call bool, refresh_typ
 	now := time.Now().UTC()
 	chain, err = td.chain_db.GetChain(symbol, date, is_call)
 	if chain == nil || utils.NeedsRefresh(refresh_type, chain.LastRefreshedAt, now) {
+		log.Println("Fetching chain from server: ", chain, now, now.Sub(chain.LastRefreshedAt), refresh_type)
 		err = td.FetchChain(symbol, date, is_call)
 		if err == nil {
 			chain, err = td.chain_db.GetChain(symbol, date, is_call)
