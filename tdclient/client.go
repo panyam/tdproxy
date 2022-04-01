@@ -65,7 +65,7 @@ func (td *Client) GetTickers(symbols []string, refresh_type int32) (map[string]*
 	} else {
 		now2 := time.Now().UTC()
 		for sym, ticker := range fetched {
-			log.Println("Sym: ", sym, ticker)
+			log.Println("Fetched Ticker: ", sym, ticker)
 			tickers[sym] = ticker
 			if utils.NeedsRefresh(refresh_type, ticker.LastRefreshedAt, now2) {
 				log.Printf("Refresh time not properly set for: %s, Now: %s, LR: %s, RT: %d", sym, utils.FormatTime(now2), utils.FormatTime(ticker.LastRefreshedAt), refresh_type)
@@ -103,7 +103,11 @@ func (td *Client) GetChain(symbol string, date string, is_call bool, refresh_typ
 	now := time.Now().UTC()
 	chain, err = td.chain_db.GetChain(symbol, date, is_call)
 	if chain == nil || utils.NeedsRefresh(refresh_type, chain.LastRefreshedAt, now) {
-		log.Println("Fetching chain from server: ", chain, now, now.Sub(chain.LastRefreshedAt), refresh_type)
+		if chain != nil {
+			log.Println("ReFetching chain from server: ", chain, now, refresh_type, now.Sub(chain.LastRefreshedAt))
+		} else {
+			log.Println("Fetching new chain from server: ", symbol, date, is_call, refresh_type)
+		}
 		err = td.FetchChain(symbol, date, is_call)
 		if err == nil {
 			chain, err = td.chain_db.GetChain(symbol, date, is_call)
@@ -180,10 +184,10 @@ func (td *Client) FetchChain(symbol string, date string, is_call bool) error {
 		log.Println("Json Error: ", result)
 		return err
 	}
-	for _, entry := range calls {
+	for _, entry := range puts {
 		td.chain_db.SaveChain(entry)
 	}
-	for _, entry := range puts {
+	for _, entry := range calls {
 		td.chain_db.SaveChain(entry)
 	}
 	// chains = group_chains_by_date(chain)

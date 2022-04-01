@@ -35,21 +35,8 @@ func ChainFromDict(symbol string, date string, is_call bool,
 		} else {
 			detail = option_details.(map[string]interface{})
 		}
-		option := Option{
-			Symbol:      symbol,
-			DateString:  date,
-			IsCall:      is_call,
-			PriceString: price_string,
-		}
-		option.Info = OptionJsonField{
-			OptionSymbol: symbol,
-			Json:         NewJson(detail),
-		}
-		if !option.Refresh() {
-			log.Println("Refresh failed: ", option)
-		} else {
-			options = append(options, &option)
-		}
+		option := NewOption(symbol, date, price_string, is_call, detail)
+		options = append(options, option)
 	}
 	chain := NewChain(symbol, date, is_call, options)
 	chain.LastRefreshedAt = refreshed_at

@@ -31,6 +31,7 @@ type Option struct {
 }
 
 func NewOption(symbol string, date_string string, price_string string, is_call bool, info map[string]interface{}) *Option {
+	// log.Println("Args: ", symbol, date_string, price_string, is_call)
 	out := &Option{
 		Symbol:      symbol,
 		DateString:  date_string,
@@ -59,6 +60,7 @@ func (opt *Option) ShortKey() string {
 func (opt *Option) Refresh() bool {
 	res, err := opt.Info.Value()
 	if err != nil {
+		log.Println("Err refreshing option info: ", err)
 		return false
 	}
 	info := res.(utils.StringMap)
@@ -79,7 +81,7 @@ func (opt *Option) Refresh() bool {
 	}
 	if val, ok := info["delta"]; ok {
 		defer func() {
-			if err := recover(); err != nil {
+			if err := recover(); err != nil && val != "NaN" {
 				log.Println("Panic Occurred: ", err, val)
 			}
 		}()

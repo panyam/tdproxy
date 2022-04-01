@@ -16,7 +16,7 @@ type ChainDB struct {
 }
 
 func NewChainDB(db *gorm.DB) *ChainDB {
-	db.AutoMigrate(&models.ChainInfo{})
+	// db.AutoMigrate(&models.ChainInfo{})
 	db.AutoMigrate(&models.Chain{})
 	return &ChainDB{
 		optiondb: NewOptionDB(db),
@@ -24,17 +24,30 @@ func NewChainDB(db *gorm.DB) *ChainDB {
 	}
 }
 
-func (db *ChainDB) GetChainInfo(symbol string) (*models.ChainInfo, error) {
-	var out models.ChainInfo
-	err := db.db.First(&out, "symbol = ?", symbol).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil
-		} else {
-			return nil, err
-		}
+func (db *ChainDB) GetChainInfo(symbol string) (out *models.ChainInfo, err error) {
+	var chains []models.Chain
+	result := db.db.Order("date_string").Where("symbol = ?", symbol).Find(&chains)
+	if result.Error != nil {
+		return nil, result.Error
 	}
-	return &out, err
+	// Now go through all and collect the dates
+	lowestRefreshedAt := time.Now().UTC()
+	out = &models.ChainInfo{Symbol: symbol}
+	last := ""
+	for _, chain := range chains {
+		// use the refresh time of the oldest date as the chain's last refreshed date
+		if chain.LastRefreshedAt.Sub(lowestRefreshedAt) < 0 {
+			lowestRefreshedAt = chain.LastRefreshedAt
+		}
+		if last != chain.DateString {
+			out.AvailableDates = append(out.AvailableDates, chain.DateString)
+		}
+		last = chain.DateString
+	}
+	if len(out.AvailableDates) == 0 {
+		out = nil
+	}
+	return
 }
 
 func (db *ChainDB) SaveChainInfo(symbol string, last_refreshed_at time.Time) error {
