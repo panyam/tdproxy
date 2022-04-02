@@ -2,7 +2,6 @@ package models
 
 import (
 	"fmt"
-	"github.com/panyam/goutils/utils"
 	"log"
 	"strconv"
 )
@@ -27,7 +26,7 @@ type Option struct {
 	OpenInterest int32
 	Delta        float64
 	Multiplier   float64
-	Info         OptionJsonField // *Json
+	Info         JsonField `gorm:"type:text"` // OptionJsonJson
 }
 
 func NewOption(symbol string, date_string string, price_string string, is_call bool, info map[string]interface{}) *Option {
@@ -37,13 +36,16 @@ func NewOption(symbol string, date_string string, price_string string, is_call b
 		DateString:  date_string,
 		PriceString: price_string,
 		IsCall:      is_call,
-		Info: OptionJsonField{
-			Json:              NewJson(info),
-			OptionSymbol:      symbol,
-			OptionDateString:  date_string,
-			OptionIsCall:      is_call,
-			OptionPriceString: price_string,
-		},
+		Info:        info,
+		/*
+			Info: OptionJsonField{
+				Json:              NewJson(info),
+				OptionSymbol:      symbol,
+				OptionDateString:  date_string,
+				OptionIsCall:      is_call,
+				OptionPriceString: price_string,
+			},
+		*/
 	}
 	out.Refresh()
 	return out
@@ -58,12 +60,14 @@ func (opt *Option) ShortKey() string {
 }
 
 func (opt *Option) Refresh() bool {
-	res, err := opt.Info.Value()
-	if err != nil {
-		log.Println("Err refreshing option info: ", err)
-		return false
-	}
-	info := res.(utils.StringMap)
+	/*
+		res, err := opt.Info.Value()
+		if err != nil {
+			log.Println("Err refreshing option info: ", err)
+			return false
+		}
+	*/
+	info := opt.Info // .(utils.StringMap)
 	if val, ok := info["ask"]; ok {
 		opt.AskPrice = val.(float64)
 	}

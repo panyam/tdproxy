@@ -12,7 +12,7 @@ type OptionDB struct {
 
 func NewOptionDB(db *gorm.DB) *OptionDB {
 	db.AutoMigrate(&models.Option{})
-	db.AutoMigrate(&models.OptionJsonField{})
+	// db.AutoMigrate(&models.OptionJsonField{})
 	return &OptionDB{db: db}
 }
 
@@ -34,7 +34,7 @@ func (db *OptionDB) GetOption(symbol string, date string, is_call bool, price st
  */
 func (db *OptionDB) GetOptions(is_call bool, symbol string, date string) ([]*models.Option, error) {
 	var options []*models.Option
-	err := db.db.Joins("Info").Where("symbol = ? AND date_string = ? AND is_call = ?", symbol, date, is_call).Find(&options).Error
+	err := db.db.Where("symbol = ? AND date_string = ? AND is_call = ?", symbol, date, is_call).Find(&options).Error
 	if err != nil {
 		return nil, err
 	}

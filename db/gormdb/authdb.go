@@ -15,8 +15,6 @@ type AuthDB struct {
 
 func NewAuthDB(db *gorm.DB) *AuthDB {
 	db.AutoMigrate(&models.Auth{})
-	db.AutoMigrate(&models.AuthTokenJsonField{})
-	db.AutoMigrate(&models.UserPrincipalsJsonField{})
 	return &AuthDB{
 		db: db,
 	}
@@ -24,7 +22,7 @@ func NewAuthDB(db *gorm.DB) *AuthDB {
 
 func (a *AuthDB) LastAuth() *models.Auth {
 	var out models.Auth
-	err := a.db.Preload("UserPrincipals").Preload("AuthToken").First(&out).Error
+	err := a.db.First(&out).Error
 	if err != nil {
 		return nil
 	}
@@ -46,7 +44,7 @@ func (authdb *AuthDB) EnsureAuth(client_id string) (auth *models.Auth, err error
 
 func (db *AuthDB) GetAuth(client_id string) (*models.Auth, error) {
 	var out models.Auth
-	err := db.db.Preload("UserPrincipals").Preload("AuthToken").First(&out, "client_id = ?", client_id).Error
+	err := db.db.First(&out, "client_id = ?", client_id).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil

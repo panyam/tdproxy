@@ -1,15 +1,14 @@
 package services
 
 import (
-	"github.com/panyam/goutils/utils"
 	structpb "google.golang.org/protobuf/types/known/structpb"
 	"log"
 	"tdproxy/models"
 	"tdproxy/protos"
 )
 
-func OptionToProto(option *models.Option) (*protos.Option, error) {
-	out := &protos.Option{
+func OptionToProto(option *models.Option) (out *protos.Option, err error) {
+	out = &protos.Option{
 		Symbol:       option.Symbol,
 		DateString:   option.DateString,
 		PriceString:  option.PriceString,
@@ -21,9 +20,9 @@ func OptionToProto(option *models.Option) (*protos.Option, error) {
 		Delta:        option.Delta,
 		OpenInterest: option.OpenInterest,
 	}
-	val, err := option.Info.Value()
-	if err == nil && val != nil {
-		out.Info, err = structpb.NewStruct(val.(utils.StringMap))
+	val := option.Info
+	if val != nil {
+		out.Info, err = structpb.NewStruct(val)
 	}
 	if err != nil {
 		log.Println("Error parsing info: ", err)

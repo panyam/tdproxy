@@ -21,8 +21,8 @@ type Auth struct {
 	CallbackUrl           string
 	ExpiresAt             time.Time
 	RefreshTokenExpiresAt time.Time
-	AuthToken             AuthTokenJsonField
-	UserPrincipals        UserPrincipalsJsonField
+	AuthToken             JsonField `gorm:"type:text"` // AuthTokenJsonField
+	UserPrincipals        JsonField `gorm:"type:text"` // UserPrincipalsJsonField
 }
 
 func (a *Auth) ToJson() utils.StringMap {
@@ -56,39 +56,54 @@ func (auth *Auth) FromJson(json utils.StringMap) {
 }
 
 func (auth *Auth) AuthTokenValue() utils.StringMap {
-	res, err := auth.AuthToken.Value()
-	if err != nil || res == nil {
-		return nil
-	}
-	return res.(utils.StringMap)
+	return auth.AuthToken
+	/*
+		res, err := auth.AuthToken.Value()
+		if err != nil || res == nil {
+			return nil
+		}
+		return res.(utils.StringMap)
+	*/
 }
 
 func (auth *Auth) UserPrincipalsValue() utils.StringMap {
-	res, err := auth.UserPrincipals.Value()
-	if err != nil || res == nil {
-		return nil
-	}
-	return res.(utils.StringMap)
+	return auth.UserPrincipals
+	/*
+		res, err := auth.UserPrincipals.Value()
+		if err != nil || res == nil {
+			return nil
+		}
+		return res.(utils.StringMap)
+	*/
 }
 
 func (auth *Auth) SetUserPrincipals(info utils.StringMap) bool {
 	// auth.userPrincipals = NewJson(fmt.Sprintf("auth_%s_up", auth.ClientId), info)
-	auth.UserPrincipals = UserPrincipalsJsonField{
-		AuthClientId: auth.ClientId,
-		Json:         NewJson(info),
-	}
+	auth.UserPrincipals = JsonField(info)
+	/*
+		UserPrincipalsJsonField{
+			AuthClientId: auth.ClientId,
+			Json:         NewJson(info),
+		}
+	*/
 	return true
 }
 
 func (auth *Auth) SetAuthToken(info utils.StringMap) bool {
-	auth.AuthToken = AuthTokenJsonField{
+	auth.AuthToken = JsonField(info)
+	/*AuthTokenJsonField{
 		AuthClientId: auth.ClientId,
 		Json:         NewJson(info),
 	}
-	// auth.authToken = NewJson(fmt.Sprintf("auth_%s_at", auth.ClientId), info)
+	*/
 
 	now := time.Now().UTC()
-	expires_in := time.Duration(info["expires_in"].(float64))
+	expires_in := time.Duration(0)
+	if val, ok := info["expires_in"]; ok {
+		expires_in = time.Duration(val.(float64))
+	} else {
+		log.Println("Could not find expires_in: ", info)
+	}
 	auth.ExpiresAt = now.Add(expires_in * time.Second)
 	if val, ok := info["refresh_token_expires_in"]; ok && val != nil {
 		refresh_token_expires_in := time.Duration(val.(float64))
@@ -101,7 +116,7 @@ func (auth *Auth) SetAuthToken(info utils.StringMap) bool {
 }
 
 func (auth *Auth) IsAuthenticated() bool {
-	if !auth.AuthToken.HasValue() {
+	if auth.AuthToken == nil {
 		return false
 	}
 	if auth.ExpiresAt.Sub(time.Now().UTC()) <= 0 {
