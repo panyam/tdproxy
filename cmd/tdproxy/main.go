@@ -42,6 +42,8 @@ var (
 )
 
 func createPubsubClient() *cli.PubSub {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
 	pubsub, err := cli.NewPubSub(*topic_endpoint)
 	if err != nil {
 		log.Fatal(err)

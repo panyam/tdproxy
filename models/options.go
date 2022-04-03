@@ -6,6 +6,7 @@ import (
 	"strconv"
 )
 
+/*
 type OptionJsonField struct {
 	*Json
 	OptionSymbol      string `gorm:"primaryKey"`
@@ -13,6 +14,7 @@ type OptionJsonField struct {
 	OptionIsCall      bool   `gorm:"primaryKey"`
 	OptionPriceString string `gorm:"primaryKey"`
 }
+*/
 
 type Option struct {
 	Symbol       string `gorm:"primaryKey" gorm:"index:ByCallSymbolDate,priority:1"`

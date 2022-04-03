@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"log"
 	// "fmt"
 	"github.com/panyam/goutils/utils"
@@ -17,6 +18,9 @@ type TickerService struct {
 }
 
 func (s *TickerService) GetTickers(ctx context.Context, request *protos.GetTickersRequest) (*protos.GetTickersResponse, error) {
+	if !s.AuthStore.EnsureAuthenticated(s.AuthStore.LastAuth().ClientId) {
+		return nil, errors.New("Not authenticated.  Call StartLogin first")
+	}
 	refresh_type := int32(0)
 	if request.RefreshType != nil {
 		refresh_type = *request.RefreshType
@@ -28,19 +32,16 @@ func (s *TickerService) GetTickers(ctx context.Context, request *protos.GetTicke
 		Tickers: make(map[string]*protos.Ticker),
 	}
 	for sym, ticker := range tickers {
-		val, err := ticker.Info.Value()
-		if err == nil {
-			info, err := structpb.NewStruct(val.(utils.StringMap))
-			if err != nil {
-				resp.Errors[sym] = err.Error()
-			}
-			tickerproto := &protos.Ticker{
-				Symbol:          sym,
-				LastRefreshedAt: utils.FormatTime(ticker.LastRefreshedAt),
-				Info:            info,
-			}
-			resp.Tickers[sym] = tickerproto
+		info, err := structpb.NewStruct(ticker.Info)
+		if err != nil {
+			resp.Errors[sym] = err.Error()
 		}
+		tickerproto := &protos.Ticker{
+			Symbol:          sym,
+			LastRefreshedAt: utils.FormatTime(ticker.LastRefreshedAt),
+			Info:            info,
+		}
+		resp.Tickers[sym] = tickerproto
 	}
 	return resp, err
 }

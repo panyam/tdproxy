@@ -27,12 +27,12 @@ message Chain {
 }
 
 service ChainService {
-  rpc GetChainInfo(GetChainInfoRequest) returns (GetChainInfoResponse) {}
+  rpc GetChainInfo(GetChainInfoRequest) returns (stream GetChainInfoResponse) {}
   rpc GetChain(GetChainRequest) returns (GetChainResponse) {}
 }
 
 message GetChainInfoRequest {
-  string symbol = 1;
+  repeated string symbols = 1;
 
   /**
    * MAX_INT effective means never refresh
@@ -47,6 +47,8 @@ message GetChainInfoResponse {
   string symbol = 1;
   repeated string dates = 2;
   string last_refreshed_at = 3;
+  int32 error_code = 4;
+  string error_message = 5;
 }
 
 message GetChainRequest {
@@ -75,3 +77,4 @@ message GetChainResponse {
   optional string error_message = 1;
   Chain chain = 2;
 }
+

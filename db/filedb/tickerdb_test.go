@@ -53,11 +53,11 @@ func TestTickerSaveAndGet(t *testing.T) {
 	}
 	db.SaveTicker(&ticker)
 
-	loaded := db.GetTicker("SYM")
+	loaded, _ := db.GetTicker("SYM")
 	assert.Equal(t, loaded, &ticker, "Saved ticker should be same due to caching")
 
 	// Remove from cache and see what happens
 	delete(db.tickerCache, "SYM")
-	loaded = db.GetTicker("SYM")
+	loaded, _ = db.GetTicker("SYM")
 	assert.Equal(t, loaded, &ticker, "Without caching Saved ticker should be same as?")
 }

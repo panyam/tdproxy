@@ -91,12 +91,6 @@ func (auth *Auth) SetUserPrincipals(info utils.StringMap) bool {
 
 func (auth *Auth) SetAuthToken(info utils.StringMap) bool {
 	auth.AuthToken = JsonField(info)
-	/*AuthTokenJsonField{
-		AuthClientId: auth.ClientId,
-		Json:         NewJson(info),
-	}
-	*/
-
 	now := time.Now().UTC()
 	expires_in := time.Duration(0)
 	if val, ok := info["expires_in"]; ok {

@@ -12,7 +12,6 @@ type TickerDB struct {
 
 func NewTickerDB(db *gorm.DB) *TickerDB {
 	db.AutoMigrate(&models.Ticker{})
-	db.AutoMigrate(&models.TickerJsonField{})
 	return &TickerDB{db: db}
 }
 

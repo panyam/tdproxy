@@ -12,6 +12,7 @@ func OptionToProto(option *models.Option) (out *protos.Option, err error) {
 		Symbol:       option.Symbol,
 		DateString:   option.DateString,
 		PriceString:  option.PriceString,
+		StrikePrice:  option.StrikePrice,
 		IsCall:       option.IsCall,
 		AskPrice:     option.AskPrice,
 		BidPrice:     option.BidPrice,

@@ -15,20 +15,32 @@ type ChainService struct {
 	AuthStore *tdclient.AuthStore
 }
 
-func (s *ChainService) GetChainInfo(ctx context.Context, request *protos.GetChainInfoRequest) (*protos.GetChainInfoResponse, error) {
+func (s *ChainService) GetChainInfo(req *protos.GetChainInfoRequest, stream protos.ChainService_GetChainInfoServer) error {
 	refresh_type := int32(0)
-	if request.RefreshType != nil {
-		refresh_type = *request.RefreshType
+	if req.RefreshType != nil {
+		refresh_type = *req.RefreshType
 	}
-	info, err := s.TDClient.GetChainInfo(request.Symbol, refresh_type)
-	resp := &protos.GetChainInfoResponse{}
-	log.Println("Chain: ", info)
-	if info != nil {
-		resp.Symbol = info.Symbol
-		resp.Dates = info.AvailableDates
-		resp.LastRefreshedAt = utils.FormatTime(info.LastRefreshedAt)
+
+	for _, symbol := range req.Symbols {
+		resp := &protos.GetChainInfoResponse{Symbol: symbol}
+		info, err := s.TDClient.GetChainInfo(symbol, refresh_type)
+		log.Println("ChainInfo: ", info)
+		if err != nil {
+			resp.ErrorCode = 1
+			resp.ErrorMessage = err.Error()
+		} else if info == nil {
+			resp.ErrorCode = 2
+			resp.ErrorMessage = "Chain not found"
+		} else {
+			resp.Dates = info.AvailableDates
+			resp.LastRefreshedAt = utils.FormatTime(info.LastRefreshedAt)
+		}
+		if err = stream.Send(resp); err != nil {
+			log.Printf("%v.Send(%v) = %v", stream, resp, err)
+			return err
+		}
 	}
-	return resp, err
+	return nil
 }
 
 func (s *ChainService) GetChain(ctx context.Context, request *protos.GetChainRequest) (*protos.GetChainResponse, error) {

@@ -56,12 +56,12 @@ func TestChainSaveAndGet(t *testing.T) {
 	chain.LastRefreshedAt = now
 	db.SaveChain(chain)
 
-	loaded := db.GetChain("SYM", TEST_DATE, true)
+	loaded, _ := db.GetChain("SYM", TEST_DATE, true)
 	assert.Equal(t, loaded, chain, "Saved chain should be same due to caching")
 
 	// Remove from cache and see what happens
 	chainKey := db.ChainKeyFor("SYM", TEST_DATE, true)
 	delete(db.chainCache, chainKey)
-	loaded = db.GetChain("SYM", TEST_DATE, true)
+	loaded, _ = db.GetChain("SYM", TEST_DATE, true)
 	assert.Equal(t, loaded, chain, "Without caching Saved ticker should be same as?")
 }

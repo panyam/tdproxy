@@ -18,7 +18,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ChainServiceClient interface {
-	GetChainInfo(ctx context.Context, in *GetChainInfoRequest, opts ...grpc.CallOption) (*GetChainInfoResponse, error)
+	GetChainInfo(ctx context.Context, in *GetChainInfoRequest, opts ...grpc.CallOption) (ChainService_GetChainInfoClient, error)
 	GetChain(ctx context.Context, in *GetChainRequest, opts ...grpc.CallOption) (*GetChainResponse, error)
 }
 
@@ -30,13 +30,36 @@ func NewChainServiceClient(cc grpc.ClientConnInterface) ChainServiceClient {
 	return &chainServiceClient{cc}
 }
 
-func (c *chainServiceClient) GetChainInfo(ctx context.Context, in *GetChainInfoRequest, opts ...grpc.CallOption) (*GetChainInfoResponse, error) {
-	out := new(GetChainInfoResponse)
-	err := c.cc.Invoke(ctx, "/protos.ChainService/GetChainInfo", in, out, opts...)
+func (c *chainServiceClient) GetChainInfo(ctx context.Context, in *GetChainInfoRequest, opts ...grpc.CallOption) (ChainService_GetChainInfoClient, error) {
+	stream, err := c.cc.NewStream(ctx, &ChainService_ServiceDesc.Streams[0], "/protos.ChainService/GetChainInfo", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &chainServiceGetChainInfoClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type ChainService_GetChainInfoClient interface {
+	Recv() (*GetChainInfoResponse, error)
+	grpc.ClientStream
+}
+
+type chainServiceGetChainInfoClient struct {
+	grpc.ClientStream
+}
+
+func (x *chainServiceGetChainInfoClient) Recv() (*GetChainInfoResponse, error) {
+	m := new(GetChainInfoResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 func (c *chainServiceClient) GetChain(ctx context.Context, in *GetChainRequest, opts ...grpc.CallOption) (*GetChainResponse, error) {
@@ -52,7 +75,7 @@ func (c *chainServiceClient) GetChain(ctx context.Context, in *GetChainRequest, 
 // All implementations must embed UnimplementedChainServiceServer
 // for forward compatibility
 type ChainServiceServer interface {
-	GetChainInfo(context.Context, *GetChainInfoRequest) (*GetChainInfoResponse, error)
+	GetChainInfo(*GetChainInfoRequest, ChainService_GetChainInfoServer) error
 	GetChain(context.Context, *GetChainRequest) (*GetChainResponse, error)
 	mustEmbedUnimplementedChainServiceServer()
 }
@@ -61,8 +84,8 @@ type ChainServiceServer interface {
 type UnimplementedChainServiceServer struct {
 }
 
-func (UnimplementedChainServiceServer) GetChainInfo(context.Context, *GetChainInfoRequest) (*GetChainInfoResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetChainInfo not implemented")
+func (UnimplementedChainServiceServer) GetChainInfo(*GetChainInfoRequest, ChainService_GetChainInfoServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetChainInfo not implemented")
 }
 func (UnimplementedChainServiceServer) GetChain(context.Context, *GetChainRequest) (*GetChainResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetChain not implemented")
@@ -80,22 +103,25 @@ func RegisterChainServiceServer(s grpc.ServiceRegistrar, srv ChainServiceServer)
 	s.RegisterService(&ChainService_ServiceDesc, srv)
 }
 
-func _ChainService_GetChainInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetChainInfoRequest)
-	if err := dec(in); err != nil {
-		return nil, err
+func _ChainService_GetChainInfo_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetChainInfoRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
 	}
-	if interceptor == nil {
-		return srv.(ChainServiceServer).GetChainInfo(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/protos.ChainService/GetChainInfo",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ChainServiceServer).GetChainInfo(ctx, req.(*GetChainInfoRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+	return srv.(ChainServiceServer).GetChainInfo(m, &chainServiceGetChainInfoServer{stream})
+}
+
+type ChainService_GetChainInfoServer interface {
+	Send(*GetChainInfoResponse) error
+	grpc.ServerStream
+}
+
+type chainServiceGetChainInfoServer struct {
+	grpc.ServerStream
+}
+
+func (x *chainServiceGetChainInfoServer) Send(m *GetChainInfoResponse) error {
+	return x.ServerStream.SendMsg(m)
 }
 
 func _ChainService_GetChain_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -124,14 +150,16 @@ var ChainService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*ChainServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetChainInfo",
-			Handler:    _ChainService_GetChainInfo_Handler,
-		},
-		{
 			MethodName: "GetChain",
 			Handler:    _ChainService_GetChain_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "GetChainInfo",
+			Handler:       _ChainService_GetChainInfo_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "protos/chains.proto",
 }

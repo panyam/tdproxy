@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/dgraph-io/badger/v3 v3.2103.2
 	github.com/gorilla/websocket v1.5.0
-	github.com/panyam/goutils v0.0.4
+	github.com/panyam/goutils v0.0.6
 	github.com/panyam/pslite v0.0.18
 	github.com/stretchr/testify v1.7.0
 	google.golang.org/grpc v1.44.0

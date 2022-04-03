@@ -155,11 +155,13 @@ func (td *Client) FetchTickers(symbols []string) (map[string]*models.Ticker, err
 		}
 		now := time.Now().UTC()
 		for sym, ticker_info := range result.(utils.StringMap) {
-			tickers[sym] = models.NewTicker(
+			t := models.NewTicker(
 				sym,
 				now,
 				ticker_info.(utils.StringMap),
 			)
+			tickers[sym] = t
+			td.ticker_db.SaveTicker(t)
 		}
 		symbols = tail
 	}

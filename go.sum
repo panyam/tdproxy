@@ -107,8 +107,8 @@ github.com/mattn/go-sqlite3 v1.14.12/go.mod h1:NyWgC/yNuGj7Q9rpYnZvas74GogHl5/Z4
 github.com/mitchellh/go-homedir v1.1.0/go.mod h1:SfyaCUpYCn1Vlf4IUYiD9fPX4A5wJrkLzIz1N1q0pr0=
 github.com/mitchellh/mapstructure v1.1.2/go.mod h1:FVVH3fgwuzCH5S8UJGiWEs2h04kUh9fWfEaFds41c1Y=
 github.com/panyam/goutils v0.0.2/go.mod h1:0xtVrB4WxB7ts+dHy+wz1GzCNoVERFrc++HZVKlDi4c=
-github.com/panyam/goutils v0.0.4 h1:b38qcoinh9aIXtDX6BDfnkNzkIlV37CXa0EdC27hKaQ=
-github.com/panyam/goutils v0.0.4/go.mod h1:vpKhtYiA7MsjgsS57OAvW/7MwhJI/biEwLVdo9MSQVw=
+github.com/panyam/goutils v0.0.6 h1:Srmd9ZqI4O9YD5Tf2zV8j5BTm8dJI7NH9Rts+uOetaY=
+github.com/panyam/goutils v0.0.6/go.mod h1:vpKhtYiA7MsjgsS57OAvW/7MwhJI/biEwLVdo9MSQVw=
 github.com/panyam/pslite v0.0.18 h1:J8gAK2a/G3yU3kKSCrtHa8OKXBkQEzaVBy5Q92wnYxY=
 github.com/panyam/pslite v0.0.18/go.mod h1:mpKlyowgB02opY4azGtLeyY1MhcAZGjre5F+xdCM5PE=
 github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=

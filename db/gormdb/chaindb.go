@@ -1,6 +1,7 @@
 package gormdb
 
 import (
+	"github.com/panyam/goutils/utils"
 	"log"
 	// "gorm.io/driver/sqlite"
 	"errors"
@@ -34,10 +35,13 @@ func (db *ChainDB) GetChainInfo(symbol string) (out *models.ChainInfo, err error
 	lowestRefreshedAt := time.Now().UTC()
 	out = &models.ChainInfo{Symbol: symbol}
 	last := ""
+	today := time.Now().UTC()
 	for _, chain := range chains {
 		// use the refresh time of the oldest date as the chain's last refreshed date
 		if chain.LastRefreshedAt.Sub(lowestRefreshedAt) < 0 {
-			lowestRefreshedAt = chain.LastRefreshedAt
+			if utils.ParseDate(chain.DateString).Sub(today) >= 0 {
+				lowestRefreshedAt = chain.LastRefreshedAt
+			}
 		}
 		if last != chain.DateString {
 			out.AvailableDates = append(out.AvailableDates, chain.DateString)
@@ -46,6 +50,8 @@ func (db *ChainDB) GetChainInfo(symbol string) (out *models.ChainInfo, err error
 	}
 	if len(out.AvailableDates) == 0 {
 		out = nil
+	} else {
+		out.LastRefreshedAt = lowestRefreshedAt
 	}
 	return
 }

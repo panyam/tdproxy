@@ -1,6 +1,7 @@
 package tdclient
 
 import (
+	"errors"
 	"fmt"
 	"github.com/panyam/goutils/utils"
 	"io/ioutil"
@@ -12,6 +13,8 @@ import (
 	"tdproxy/models"
 	"time"
 )
+
+var RefreshTokensExpired = errors.New("Expired Refresh Tokens")
 
 type Auth struct {
 	*models.Auth
@@ -104,39 +107,48 @@ func (auth *Auth) RefreshTokens() (err error) {
 	}()
 	form := url.Values{}
 	form.Add("grant_type", "refresh_token")
-	form.Add("refresh_token", auth.AuthTokenValue()["refresh_token"].(string))
-	form.Add("client_id", auth.ClientId)
-	form.Add("redirect_uri", auth.CallbackUrl)
-	fmt.Println("Form: ", form)
-	var postreq *http.Request
-	postreq, err = http.NewRequest("POST", TDAMT_TOKEN_URL, strings.NewReader(form.Encode()))
-	postreq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	auth_token := auth.AuthTokenValue()
+	if refresh_token, ok := auth_token["refresh_token"]; ok && refresh_token != nil {
+		form.Add("refresh_token", refresh_token.(string))
+		form.Add("client_id", auth.ClientId)
+		form.Add("redirect_uri", auth.CallbackUrl)
+		fmt.Println("Form: ", form)
+		var postreq *http.Request
+		postreq, err = http.NewRequest("POST", TDAMT_TOKEN_URL, strings.NewReader(form.Encode()))
+		postreq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	client := &http.Client{}
-	var response *http.Response
-	response, err = client.Do(postreq)
-	if err != nil {
-		return err
-	}
-	defer response.Body.Close()
+		client := &http.Client{}
+		var response *http.Response
+		response, err = client.Do(postreq)
+		if err != nil {
+			return err
+		}
+		defer response.Body.Close()
 
-	fmt.Println("Refresh Tokens Response Status:", response.Status)
-	fmt.Println("Refresh Tokens Response Headers:", response.Header)
-	body, _ := ioutil.ReadAll(response.Body)
-	fmt.Println("response Body:", string(body))
-	if response.StatusCode != 200 {
-		fmt.Println("Failed Response: ", response)
-		return fmt.Errorf(response.Status)
-	}
+		fmt.Println("Refresh Tokens Response Status:", response.Status)
+		fmt.Println("Refresh Tokens Response Headers:", response.Header)
+		body, _ := ioutil.ReadAll(response.Body)
+		fmt.Println("response Body:", string(body))
+		if response.StatusCode != 200 {
+			fmt.Println("Failed Response: ", response)
+			return fmt.Errorf(response.Status)
+		}
 
-	// Save it locally now
-	var token interface{}
-	token, err = utils.JsonDecodeBytes(body)
-	if err != nil {
-		fmt.Println("Invalid response json: ", err)
-		return err
+		// Save it locally now
+		var token interface{}
+		token, err = utils.JsonDecodeBytes(body)
+		if err != nil {
+			fmt.Println("Invalid response json: ", err)
+			return err
+		}
+		// but first add the refresh token back in so it is available
+		new_token := token.(utils.StringMap)
+		new_token["refresh_token_expires_in"] = auth_token["refresh_token_expires_in"]
+		new_token["refresh_token"] = refresh_token
+		auth.SetAuthToken(new_token)
+	} else {
+		err = RefreshTokensExpired
 	}
-	auth.SetAuthToken(token.(utils.StringMap))
 	return err
 }
 
