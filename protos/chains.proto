@@ -24,6 +24,7 @@ message Chain {
   bool is_call = 3;
   string last_refreshed_at = 4;
   repeated Option options = 5;
+  map<string, Option> options_by_price = 6;
 }
 
 service ChainService {

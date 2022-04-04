@@ -59,6 +59,7 @@ func (s *ChainService) GetChain(ctx context.Context, request *protos.GetChainReq
 			Date:            request.Date,
 			IsCall:          request.IsCall,
 			LastRefreshedAt: utils.FormatTime(chain.LastRefreshedAt),
+			OptionsByPrice:  make(map[string]*protos.Option),
 		}
 		for _, option := range chain.Options {
 			opt, err := OptionToProto(option)
@@ -67,6 +68,7 @@ func (s *ChainService) GetChain(ctx context.Context, request *protos.GetChainReq
 			}
 			if opt != nil {
 				resp.Chain.Options = append(resp.Chain.Options, opt)
+				resp.Chain.OptionsByPrice[opt.PriceString] = opt
 			}
 		}
 	}
