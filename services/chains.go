@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/panyam/goutils/utils"
 	"log"
+	"tdproxy/models"
 	"tdproxy/protos"
 	"tdproxy/tdclient"
 )
@@ -70,6 +71,11 @@ func (s *ChainService) GetChain(ctx context.Context, request *protos.GetChainReq
 				resp.Chain.Options = append(resp.Chain.Options, opt)
 				resp.Chain.OptionsByPrice[opt.PriceString] = opt
 			}
+		}
+
+		// Calculate prob range
+		if resp.Chain.IsCall {
+			resp.Chain.ProbDist = ProbDistToProto(models.DistFromCalls(chain.Options))
 		}
 	}
 	return resp, err

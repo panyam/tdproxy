@@ -25,6 +25,18 @@ message Chain {
   string last_refreshed_at = 4;
   repeated Option options = 5;
   map<string, Option> options_by_price = 6;
+  ProbDist prob_dist = 7;
+}
+
+message ProbDist {
+  repeated ProbRange distribution = 1;
+}
+
+message ProbRange {
+  double x1 = 1;
+  double x2 = 2;
+  double lt_prob = 3;
+  double range_prob = 4;
 }
 
 service ChainService {

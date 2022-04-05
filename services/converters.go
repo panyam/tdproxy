@@ -189,3 +189,51 @@ func OrdersToProto(items []*models.Order) (out []*protos.Order) {
 	}
 	return
 }
+
+func ProbDistFromProto(item *protos.ProbDist) (out *models.ProbDist) {
+	out = &models.ProbDist{
+		Distribution: ProbRangesFromProto(item.Distribution),
+	}
+	return
+}
+
+func ProbDistToProto(item *models.ProbDist) (out *protos.ProbDist) {
+	out = &protos.ProbDist{
+		Distribution: ProbRangesToProto(item.Distribution),
+	}
+	return
+}
+
+func ProbRangeFromProto(item *protos.ProbRange) (out *models.ProbRange) {
+	out = &models.ProbRange{
+		X1:        item.X1,
+		X2:        item.X2,
+		LtProb:    item.LtProb,
+		RangeProb: item.RangeProb,
+	}
+	return
+}
+
+func ProbRangeToProto(item *models.ProbRange) (out *protos.ProbRange) {
+	out = &protos.ProbRange{
+		X1:        item.X1,
+		X2:        item.X2,
+		LtProb:    item.LtProb,
+		RangeProb: item.RangeProb,
+	}
+	return
+}
+
+func ProbRangesFromProto(items []*protos.ProbRange) (out []*models.ProbRange) {
+	for _, item := range items {
+		out = append(out, ProbRangeFromProto(item))
+	}
+	return
+}
+
+func ProbRangesToProto(items []*models.ProbRange) (out []*protos.ProbRange) {
+	for _, item := range items {
+		out = append(out, ProbRangeToProto(item))
+	}
+	return
+}

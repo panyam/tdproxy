@@ -2,7 +2,6 @@ package models
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 )
 
@@ -29,6 +28,11 @@ type Option struct {
 	Delta        float64
 	Multiplier   float64
 	Info         JsonField `gorm:"type:text"` // OptionJsonJson
+}
+
+func (opt *Option) HasValidDelta() bool {
+	// For calls - for puts it should be -ve or 0
+	return opt.Delta >= 0
 }
 
 func NewOption(symbol string, date_string string, price_string string, is_call bool, info map[string]interface{}) *Option {
@@ -86,15 +90,14 @@ func (opt *Option) Refresh() bool {
 		opt.OpenInterest = int32(val.(float64))
 	}
 	if val, ok := info["delta"]; ok {
-		defer func() {
-			if err := recover(); err != nil && val != "NaN" {
-				log.Println("Panic Occurred: ", err, val)
-			}
-		}()
-		opt.Delta = val.(float64)
+		if opt.Delta, ok = val.(float64); !ok {
+			opt.Delta = -1
+		}
 	}
 	if val, ok := info["multiplier"]; ok {
-		opt.Multiplier = val.(float64)
+		if opt.Multiplier, ok = val.(float64); !ok {
+			opt.Multiplier = -1
+		}
 	}
 	if opt.StrikePrice <= 0 {
 		result, err := strconv.ParseFloat(opt.PriceString, 64)
