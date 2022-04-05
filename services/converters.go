@@ -78,7 +78,11 @@ func OrderBaseToProto(item *models.OrderBase) *protos.OrderBase {
 func SingleFromProto(item *protos.Single) (out *models.Single) {
 	out = &models.Single{
 		OrderBase: *OrderBaseFromProto(item.OrderBase),
-		OptionKey: item.OptionKey,
+		// OptionKey: item.OptionKey,
+		Symbol:      item.Symbol,
+		IsCall:      item.IsCall,
+		PriceString: item.PriceString,
+		DateString:  item.DateString,
 	}
 	return
 }
@@ -86,7 +90,11 @@ func SingleFromProto(item *protos.Single) (out *models.Single) {
 func SingleToProto(item *models.Single) (out *protos.Single) {
 	out = &protos.Single{
 		OrderBase: OrderBaseToProto(&item.OrderBase),
-		OptionKey: item.OptionKey,
+		// OptionKey: item.OptionKey,
+		Symbol:      item.Symbol,
+		IsCall:      item.IsCall,
+		PriceString: item.PriceString,
+		DateString:  item.DateString,
 	}
 	return
 }

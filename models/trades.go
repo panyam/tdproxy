@@ -13,7 +13,11 @@ type OrderBase struct {
 
 type Single struct {
 	OrderBase
-	OptionKey string
+	// OptionKey   string
+	Symbol      string
+	DateString  string
+	PriceString string
+	IsCall      bool
 }
 
 type Spread struct {
@@ -79,7 +83,11 @@ func (o *OrderBase) ToJson() utils.StringMap {
 
 func (o *Single) ToJson() utils.StringMap {
 	out := o.OrderBase.ToJson()
-	out["option"] = o.OptionKey
+	// out["option"] = o.OptionKey
+	out["symbol"] = o.Symbol
+	out["date_string"] = o.DateString
+	out["price_string"] = o.PriceString
+	out["is_call"] = o.IsCall
 	return out
 }
 

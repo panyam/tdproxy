@@ -12,7 +12,10 @@ message OrderBase {
 
 message Single {
   OrderBase order_base = 1;
-  string option_key = 2;
+  string symbol = 2;
+  string date_string = 3;
+  string price_string = 4;
+  bool is_call = 5;
 }
 
 message Spread {
