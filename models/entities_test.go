@@ -44,7 +44,7 @@ func TestChainFromDict(t *testing.T) {
 	assert.Equal(t, chain.Options[0].MarkPrice, 396.67, "Mark price doesnt match")
 	assert.Equal(t, chain.Options[0].Delta, 1.003, "Delta doesnt match")
 	assert.Equal(t, chain.Options[0].Multiplier, 100.0, "Multiplier doesnt match")
-	assert.Equal(t, chain.Options[0].OpenInterest, 7, "Open Interest doesnt match")
+	assert.Equal(t, chain.Options[0].OpenInterest, int32(7), "Open Interest doesnt match")
 
 	assert.Equal(t, chain.Options[1].PriceString, "240", "Option price does not match")
 	assert.Equal(t, chain.Options[1].AskPrice, 390.0, "Ask price doesnt match")
@@ -52,5 +52,5 @@ func TestChainFromDict(t *testing.T) {
 	assert.Equal(t, chain.Options[1].MarkPrice, 387.0, "Mark price doesnt match")
 	assert.Equal(t, chain.Options[1].Delta, 1.001, "Delta doesnt match")
 	assert.Equal(t, chain.Options[1].Multiplier, 100.0, "Multiplier doesnt match")
-	assert.Equal(t, chain.Options[1].OpenInterest, 258, "Open Interest doesnt match")
+	assert.Equal(t, chain.Options[1].OpenInterest, int32(258), "Open Interest doesnt match")
 }
