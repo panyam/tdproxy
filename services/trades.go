@@ -15,7 +15,7 @@ func (s *TradeService) SaveTrades(ctx context.Context, request *protos.SaveTrade
 	for _, trade := range request.Trades {
 		err = s.TradeDB.SaveTrade(TradeFromProto(trade))
 	}
-	return
+	return &protos.SaveTradesResponse{}, err
 }
 
 func (s *TradeService) RemoveTrades(ctx context.Context, request *protos.RemoveTradesRequest) (resp *protos.RemoveTradesResponse, err error) {

@@ -36,9 +36,10 @@ func (tdb *TradeDB) SaveTrade(trade *models.Trade) (err error) {
 	}
 	err = tdb.db.Update(func(txn *badger.Txn) error {
 		if err := txn.Set([]byte(trade.TradeId), []byte(tjson)); err != nil {
+			log.Println("Set Err: ", err)
 			return err
 		}
-		return txn.Commit()
+		return nil
 	})
 
 	if err == nil {
@@ -47,6 +48,9 @@ func (tdb *TradeDB) SaveTrade(trade *models.Trade) (err error) {
 		if err == nil && result.RowsAffected == 0 {
 			err = tdb.indexdb.Create(trade).Error
 		}
+	}
+	if err != nil {
+		log.Println("Error Saving Trade: ", err)
 	}
 	return
 }

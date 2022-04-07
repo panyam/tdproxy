@@ -36,14 +36,16 @@ message Trade {
   string symbol = 2;
   string date = 3;
   string strategy = 4;
-  repeated Order orders = 5;
-  google.protobuf.Struct metadata = 6;
+  string outlook = 5;
+  repeated Order orders = 6;
+  google.protobuf.Struct metadata = 7;
 
   // Payoffs that user can provide
-  double payoff_expected_gain = 7;
-  double payoff_expected_loss = 8;
-  double payoff_gain_prob = 9;
-  double payoff_bpe = 10;
+  double payoff_expected_gain = 8;
+  double payoff_expected_loss = 9;
+  double payoff_gain_prob = 10;
+  double payoff_bpe = 11;
+  double payoff_maxprofit = 12;
 }
 
 service TradeService {
