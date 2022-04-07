@@ -22,6 +22,16 @@ func (s *ChainService) GetChainInfo(req *protos.GetChainInfoRequest, stream prot
 		refresh_type = *req.RefreshType
 	}
 
+	disconnected := false
+	go func() {
+		select {
+		case <-stream.Context().Done():
+			// Client disconnected so can stop now
+			log.Println("Client disconnected.")
+			disconnected = true
+		}
+	}()
+
 	for _, symbol := range req.Symbols {
 		resp := &protos.GetChainInfoResponse{Symbol: symbol}
 		info, err := s.TDClient.GetChainInfo(symbol, refresh_type)
@@ -36,7 +46,7 @@ func (s *ChainService) GetChainInfo(req *protos.GetChainInfoRequest, stream prot
 			resp.Dates = info.AvailableDates
 			resp.LastRefreshedAt = utils.FormatTime(info.LastRefreshedAt)
 		}
-		if err = stream.Send(resp); err != nil {
+		if err = stream.Send(resp); disconnected || err != nil {
 			log.Printf("%v.Send(%v) = %v", stream, resp, err)
 			return err
 		}

@@ -56,6 +56,7 @@ service TradeService {
 
 message SaveTradesRequest {
   repeated Trade trades = 1;
+  bool log_trades = 2;
 }
 
 message SaveTradesResponse {
@@ -72,24 +73,25 @@ message TradeFilter {
   repeated string by_symbols = 1;
 
   /**
-   * Return trades on a particular date.
+   * Allow filtering by date ranges.
    */
-  repeated string by_date = 2;
+  string start_date = 2;
+  string end_date = 3;
 
   /**
    * Return trades for a particular strategy.
    */
-  repeated string by_strategy = 3;
+  repeated string by_strategy = 4;
 
   /**
    * Filter by trades with atleast this gain probability.
    */
-  double min_gain = 4;
+  double min_gain = 5;
 
   /**
    * Filter by trades with atleast this much payoff.
    */
-  double min_profit = 5;
+  double min_profit = 6;
 }
 
 message ListTradesRequest {
@@ -102,6 +104,7 @@ message ListTradesResponse {
 
 message RemoveTradesRequest {
   TradeFilter filter_by = 1;
+  bool log_trades = 2;
 }
 
 message RemoveTradesResponse {

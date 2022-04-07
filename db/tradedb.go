@@ -65,14 +65,15 @@ func (tdb *TradeDB) RemoveTrade(tid string) (err error) {
 		if err := txn.Delete([]byte(trade.TradeId)); err != nil {
 			return err
 		}
-		return txn.Commit()
+		return nil
 	})
 	return
 }
 
 func (tdb *TradeDB) FilterTrades(
 	filter_by_symbols []string,
-	filter_by_date []string,
+	filter_start_date string,
+	filter_end_date string,
 	filter_by_strategy []string,
 	min_gain float64,
 	min_profit float64,
@@ -86,13 +87,20 @@ func (tdb *TradeDB) FilterTrades(
 	if len(filter_by_strategy) > 0 {
 		query = query.Where("strategy IN ?", filter_by_strategy)
 	}
-	if len(filter_by_date) > 0 {
-		query = query.Where("date IN ?", filter_by_date)
+	if filter_start_date != "" {
+		query = query.Where("date >= ?", filter_start_date)
+		// query = query.Where("date IN ?", filter_by_date)
+	}
+	if filter_end_date != "" {
+		query = query.Where("date <= ?", filter_end_date)
 	}
 	for _, ord := range order_by {
 		query = query.Order(ord)
 	}
 	result := query.Find(&trades)
 	err = result.Error
+	if err != nil {
+		log.Println("Error Filtering Trades: ", err)
+	}
 	return
 }
