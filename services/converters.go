@@ -35,6 +35,7 @@ func TradeFromProto(trade *protos.Trade) (out *models.Trade) {
 	out = &models.Trade{
 		TradeId:            trade.TradeId,
 		Symbol:             trade.Symbol,
+		Strategy:           trade.Strategy,
 		Date:               trade.Date,
 		PayoffExpectedGain: trade.PayoffExpectedGain,
 		PayoffExpectedLoss: trade.PayoffExpectedLoss,
@@ -49,6 +50,7 @@ func TradeToProto(trade *models.Trade) (out *protos.Trade) {
 	out = &protos.Trade{
 		TradeId:            trade.TradeId,
 		Symbol:             trade.Symbol,
+		Strategy:           trade.Strategy,
 		Date:               trade.Date,
 		PayoffExpectedGain: trade.PayoffExpectedGain,
 		PayoffExpectedLoss: trade.PayoffExpectedLoss,

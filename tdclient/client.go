@@ -85,6 +85,12 @@ func (td *Client) GetChainInfo(symbol string, refresh_type int32) (*models.Chain
 	}
 	now := time.Now().UTC()
 	if chain_info == nil || utils.NeedsRefresh(refresh_type, chain_info.LastRefreshedAt, now) {
+		if chain_info == nil {
+			log.Println("ChainInfo does not exist: ", symbol)
+		} else {
+			log.Printf("ChainInfo (%s) needs refresh, LastRefreshed: %s, Now: %s, RefreshType: %d",
+				symbol, utils.FormatTime(chain_info.LastRefreshedAt), utils.FormatTime(now), refresh_type)
+		}
 		err = td.FetchChain(symbol, "", true)
 		if err == nil {
 			err = td.chain_db.SaveChainInfo(symbol, time.Now().UTC())
@@ -103,10 +109,11 @@ func (td *Client) GetChain(symbol string, date string, is_call bool, refresh_typ
 	now := time.Now().UTC()
 	chain, err = td.chain_db.GetChain(symbol, date, is_call)
 	if chain == nil || utils.NeedsRefresh(refresh_type, chain.LastRefreshedAt, now) {
-		if chain != nil {
-			log.Println("ReFetching chain from server: ", chain, now, refresh_type, now.Sub(chain.LastRefreshedAt))
+		if chain == nil {
+			log.Println("Chain does not exist: ", symbol, date, is_call)
 		} else {
-			log.Println("Fetching new chain from server: ", symbol, date, is_call, refresh_type)
+			log.Printf("Chains (%s-%s-Call(%t)) needs refresh, LastRefreshed: %s, Now: %s, RefreshType: %d",
+				symbol, date, is_call, utils.FormatTime(chain.LastRefreshedAt), utils.FormatTime(now), refresh_type)
 		}
 		err = td.FetchChain(symbol, date, is_call)
 		if err == nil {
@@ -135,6 +142,7 @@ func (td *Client) FetchTickers(symbols []string) (map[string]*models.Ticker, err
 	if td.Auth == nil || !td.Auth.IsAuthenticated() {
 		return nil, NotAuthenticated
 	}
+	log.Println("Fetching Tickers from server: ", symbols)
 	tickers := make(map[string]*models.Ticker)
 	var tail []string
 	for len(symbols) > 0 {
@@ -172,6 +180,7 @@ func (td *Client) FetchChain(symbol string, date string, is_call bool) error {
 	if td.Auth == nil || !td.Auth.IsAuthenticated() {
 		return NotAuthenticated
 	}
+	log.Printf("Fetching chain from server: %s-%s-(Call:%t)", symbol, date, is_call)
 	url := fmt.Sprintf("%s?apikey=%s&symbol=%s", TDAMT_OPT_CHAIN_URL, td.Auth.ClientId, symbol)
 	// log.Printf("Loading chain data from server for %s: ", url)
 	// log.Printf("Bearer Auth: %s", td.Auth.Bearer())
@@ -187,9 +196,11 @@ func (td *Client) FetchChain(symbol string, date string, is_call bool) error {
 		return err
 	}
 	for _, entry := range puts {
+		log.Printf("Saving Put Chain for (%s - %s): ", symbol, entry.DateString)
 		td.chain_db.SaveChain(entry)
 	}
 	for _, entry := range calls {
+		log.Printf("Saving Call Chain for (%s - %s): ", symbol, entry.DateString)
 		td.chain_db.SaveChain(entry)
 	}
 	// chains = group_chains_by_date(chain)

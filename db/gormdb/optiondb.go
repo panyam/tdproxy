@@ -34,7 +34,7 @@ func (db *OptionDB) GetOption(symbol string, date string, is_call bool, price st
  */
 func (db *OptionDB) GetOptions(is_call bool, symbol string, date string) ([]*models.Option, error) {
 	var options []*models.Option
-	err := db.db.Where("symbol = ? AND date_string = ? AND is_call = ?", symbol, date, is_call).Find(&options).Error
+	err := db.db.Order("strike_price").Where("symbol = ? AND date_string = ? AND is_call = ? AND strike_price > 0.0", symbol, date, is_call).Find(&options).Error
 	if err != nil {
 		return nil, err
 	}

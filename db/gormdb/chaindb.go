@@ -83,9 +83,12 @@ func (db *ChainDB) SaveChain(chain *models.Chain) error {
 	if err == nil && result.RowsAffected == 0 {
 		err = db.db.Create(chain).Error
 	}
-	err = db.optiondb.SaveOptions(chain.Options)
+	err = db.optiondb.DeleteOptions(chain.Symbol, chain.DateString, chain.IsCall)
 	if err != nil {
-		log.Println("Error Saving Options: ", err)
+		err = db.optiondb.SaveOptions(chain.Options)
+		if err != nil {
+			log.Println("Error Saving Options: ", err)
+		}
 	}
 	return err
 }
