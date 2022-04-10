@@ -2,7 +2,7 @@ package db
 
 import (
 	"tdproxy/models"
-	"time"
+	// "time"
 )
 
 type AuthDB interface {
@@ -13,7 +13,7 @@ type AuthDB interface {
 
 type ChainDB interface {
 	GetChainInfo(symbol string) (*models.ChainInfo, error)
-	SaveChainInfo(symbol string, last_refreshed_at time.Time) error
+	// SaveChainInfo(symbol string, last_refreshed_at time.Time) error
 	GetChain(symbol string, date string, is_call bool) (*models.Chain, error)
 	SaveChain(chain *models.Chain) error
 }

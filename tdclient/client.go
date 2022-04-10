@@ -93,7 +93,6 @@ func (td *Client) GetChainInfo(symbol string, refresh_type int32) (*models.Chain
 		}
 		err = td.FetchChain(symbol, "", true)
 		if err == nil {
-			err = td.chain_db.SaveChainInfo(symbol, time.Now().UTC())
 			// Get the chain info again
 			chain_info, err = td.chain_db.GetChainInfo(symbol)
 		}

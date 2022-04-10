@@ -56,11 +56,6 @@ func (db *ChainDB) GetChainInfo(symbol string) (out *models.ChainInfo, err error
 	return
 }
 
-func (db *ChainDB) SaveChainInfo(symbol string, last_refreshed_at time.Time) error {
-	return nil
-	//return db.db.Save(option).Error
-}
-
 func (db *ChainDB) GetChain(symbol string, date string, is_call bool) (*models.Chain, error) {
 	var out models.Chain
 	err := db.db.First(&out, "is_call = ? AND symbol = ? AND date_string = ?", is_call, symbol, date).Error
@@ -84,7 +79,7 @@ func (db *ChainDB) SaveChain(chain *models.Chain) error {
 		err = db.db.Create(chain).Error
 	}
 	err = db.optiondb.DeleteOptions(chain.Symbol, chain.DateString, chain.IsCall)
-	if err != nil {
+	if err == nil {
 		err = db.optiondb.SaveOptions(chain.Options)
 		if err != nil {
 			log.Println("Error Saving Options: ", err)

@@ -27,7 +27,6 @@ func (s *ChainService) GetChainInfo(req *protos.GetChainInfoRequest, stream prot
 		select {
 		case <-stream.Context().Done():
 			// Client disconnected so can stop now
-			log.Println("Client disconnected.")
 			disconnected = true
 		}
 	}()
@@ -46,7 +45,10 @@ func (s *ChainService) GetChainInfo(req *protos.GetChainInfoRequest, stream prot
 			resp.Dates = info.AvailableDates
 			resp.LastRefreshedAt = utils.FormatTime(info.LastRefreshedAt)
 		}
-		if err = stream.Send(resp); disconnected || err != nil {
+		if disconnected {
+			log.Println("Client disconnected.")
+			break
+		} else if err = stream.Send(resp); err != nil {
 			log.Printf("%v.Send(%v) = %v", stream, resp, err)
 			return err
 		}
@@ -87,6 +89,8 @@ func (s *ChainService) GetChain(ctx context.Context, request *protos.GetChainReq
 		if resp.Chain.IsCall {
 			resp.Chain.ProbDist = ProbDistToProto(models.DistFromCalls(chain.Options))
 		}
+	} else {
+		log.Println("GetChain Error: ", err)
 	}
 	return resp, err
 }
