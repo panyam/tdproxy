@@ -59,6 +59,7 @@ type Trade struct {
 	TradeId            string `gorm:"primaryKey"`
 	Symbol             string `gorm:"index:BySymbol,priority:1"`
 	Date               string `gorm:"index:ByDate,priority:1" gorm:"index:ByDateAndGain,priority:1" gorm:"index:ByDateAndGainProb,priority:1"`
+	LoadDate           string
 	Strategy           string
 	PayoffExpectedGain float64 `gorm:"index:ByDateAndGain,priority:2"`
 	PayoffExpectedLoss float64
