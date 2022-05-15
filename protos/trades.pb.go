@@ -450,6 +450,100 @@ func (x *Trade) GetLoadDate() string {
 	return ""
 }
 
+type GetTradesRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	TradeIds []string `protobuf:"bytes,1,rep,name=trade_ids,json=tradeIds,proto3" json:"trade_ids,omitempty"`
+}
+
+func (x *GetTradesRequest) Reset() {
+	*x = GetTradesRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_protos_trades_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetTradesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetTradesRequest) ProtoMessage() {}
+
+func (x *GetTradesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_protos_trades_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetTradesRequest.ProtoReflect.Descriptor instead.
+func (*GetTradesRequest) Descriptor() ([]byte, []int) {
+	return file_protos_trades_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *GetTradesRequest) GetTradeIds() []string {
+	if x != nil {
+		return x.TradeIds
+	}
+	return nil
+}
+
+type GetTradesResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Trades map[string]*Trade `protobuf:"bytes,1,rep,name=trades,proto3" json:"trades,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+}
+
+func (x *GetTradesResponse) Reset() {
+	*x = GetTradesResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_protos_trades_proto_msgTypes[6]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetTradesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetTradesResponse) ProtoMessage() {}
+
+func (x *GetTradesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_protos_trades_proto_msgTypes[6]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetTradesResponse.ProtoReflect.Descriptor instead.
+func (*GetTradesResponse) Descriptor() ([]byte, []int) {
+	return file_protos_trades_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *GetTradesResponse) GetTrades() map[string]*Trade {
+	if x != nil {
+		return x.Trades
+	}
+	return nil
+}
+
 type SaveTradesRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -462,7 +556,7 @@ type SaveTradesRequest struct {
 func (x *SaveTradesRequest) Reset() {
 	*x = SaveTradesRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_trades_proto_msgTypes[5]
+		mi := &file_protos_trades_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -475,7 +569,7 @@ func (x *SaveTradesRequest) String() string {
 func (*SaveTradesRequest) ProtoMessage() {}
 
 func (x *SaveTradesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_trades_proto_msgTypes[5]
+	mi := &file_protos_trades_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -488,7 +582,7 @@ func (x *SaveTradesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SaveTradesRequest.ProtoReflect.Descriptor instead.
 func (*SaveTradesRequest) Descriptor() ([]byte, []int) {
-	return file_protos_trades_proto_rawDescGZIP(), []int{5}
+	return file_protos_trades_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *SaveTradesRequest) GetTrades() []*Trade {
@@ -514,7 +608,7 @@ type SaveTradesResponse struct {
 func (x *SaveTradesResponse) Reset() {
 	*x = SaveTradesResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_trades_proto_msgTypes[6]
+		mi := &file_protos_trades_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -527,7 +621,7 @@ func (x *SaveTradesResponse) String() string {
 func (*SaveTradesResponse) ProtoMessage() {}
 
 func (x *SaveTradesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_trades_proto_msgTypes[6]
+	mi := &file_protos_trades_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -540,7 +634,7 @@ func (x *SaveTradesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SaveTradesResponse.ProtoReflect.Descriptor instead.
 func (*SaveTradesResponse) Descriptor() ([]byte, []int) {
-	return file_protos_trades_proto_rawDescGZIP(), []int{6}
+	return file_protos_trades_proto_rawDescGZIP(), []int{8}
 }
 
 type TradeOrder struct {
@@ -554,7 +648,7 @@ type TradeOrder struct {
 func (x *TradeOrder) Reset() {
 	*x = TradeOrder{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_trades_proto_msgTypes[7]
+		mi := &file_protos_trades_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -567,7 +661,7 @@ func (x *TradeOrder) String() string {
 func (*TradeOrder) ProtoMessage() {}
 
 func (x *TradeOrder) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_trades_proto_msgTypes[7]
+	mi := &file_protos_trades_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -580,7 +674,7 @@ func (x *TradeOrder) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TradeOrder.ProtoReflect.Descriptor instead.
 func (*TradeOrder) Descriptor() ([]byte, []int) {
-	return file_protos_trades_proto_rawDescGZIP(), []int{7}
+	return file_protos_trades_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *TradeOrder) GetCriteria() string {
@@ -616,7 +710,7 @@ type TradeFilter struct {
 func (x *TradeFilter) Reset() {
 	*x = TradeFilter{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_trades_proto_msgTypes[8]
+		mi := &file_protos_trades_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -629,7 +723,7 @@ func (x *TradeFilter) String() string {
 func (*TradeFilter) ProtoMessage() {}
 
 func (x *TradeFilter) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_trades_proto_msgTypes[8]
+	mi := &file_protos_trades_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -642,7 +736,7 @@ func (x *TradeFilter) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TradeFilter.ProtoReflect.Descriptor instead.
 func (*TradeFilter) Descriptor() ([]byte, []int) {
-	return file_protos_trades_proto_rawDescGZIP(), []int{8}
+	return file_protos_trades_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *TradeFilter) GetBySymbols() []string {
@@ -699,7 +793,7 @@ type ListTradesRequest struct {
 func (x *ListTradesRequest) Reset() {
 	*x = ListTradesRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_trades_proto_msgTypes[9]
+		mi := &file_protos_trades_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -712,7 +806,7 @@ func (x *ListTradesRequest) String() string {
 func (*ListTradesRequest) ProtoMessage() {}
 
 func (x *ListTradesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_trades_proto_msgTypes[9]
+	mi := &file_protos_trades_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -725,7 +819,7 @@ func (x *ListTradesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTradesRequest.ProtoReflect.Descriptor instead.
 func (*ListTradesRequest) Descriptor() ([]byte, []int) {
-	return file_protos_trades_proto_rawDescGZIP(), []int{9}
+	return file_protos_trades_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ListTradesRequest) GetFilterBy() *TradeFilter {
@@ -751,7 +845,7 @@ type ListTradesResponse struct {
 func (x *ListTradesResponse) Reset() {
 	*x = ListTradesResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_trades_proto_msgTypes[10]
+		mi := &file_protos_trades_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -764,7 +858,7 @@ func (x *ListTradesResponse) String() string {
 func (*ListTradesResponse) ProtoMessage() {}
 
 func (x *ListTradesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_trades_proto_msgTypes[10]
+	mi := &file_protos_trades_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -777,7 +871,7 @@ func (x *ListTradesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTradesResponse.ProtoReflect.Descriptor instead.
 func (*ListTradesResponse) Descriptor() ([]byte, []int) {
-	return file_protos_trades_proto_rawDescGZIP(), []int{10}
+	return file_protos_trades_proto_rawDescGZIP(), []int{12}
 }
 
 type RemoveTradesRequest struct {
@@ -792,7 +886,7 @@ type RemoveTradesRequest struct {
 func (x *RemoveTradesRequest) Reset() {
 	*x = RemoveTradesRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_trades_proto_msgTypes[11]
+		mi := &file_protos_trades_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -805,7 +899,7 @@ func (x *RemoveTradesRequest) String() string {
 func (*RemoveTradesRequest) ProtoMessage() {}
 
 func (x *RemoveTradesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_trades_proto_msgTypes[11]
+	mi := &file_protos_trades_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -818,7 +912,7 @@ func (x *RemoveTradesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveTradesRequest.ProtoReflect.Descriptor instead.
 func (*RemoveTradesRequest) Descriptor() ([]byte, []int) {
-	return file_protos_trades_proto_rawDescGZIP(), []int{11}
+	return file_protos_trades_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *RemoveTradesRequest) GetFilterBy() *TradeFilter {
@@ -844,7 +938,7 @@ type RemoveTradesResponse struct {
 func (x *RemoveTradesResponse) Reset() {
 	*x = RemoveTradesResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_trades_proto_msgTypes[12]
+		mi := &file_protos_trades_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -857,7 +951,7 @@ func (x *RemoveTradesResponse) String() string {
 func (*RemoveTradesResponse) ProtoMessage() {}
 
 func (x *RemoveTradesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_trades_proto_msgTypes[12]
+	mi := &file_protos_trades_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -870,7 +964,7 @@ func (x *RemoveTradesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveTradesResponse.ProtoReflect.Descriptor instead.
 func (*RemoveTradesResponse) Descriptor() ([]byte, []int) {
-	return file_protos_trades_proto_rawDescGZIP(), []int{12}
+	return file_protos_trades_proto_rawDescGZIP(), []int{14}
 }
 
 var File_protos_trades_proto protoreflect.FileDescriptor
@@ -941,7 +1035,20 @@ var file_protos_trades_proto_rawDesc = []byte{
 	0x01, 0x28, 0x01, 0x52, 0x0f, 0x70, 0x61, 0x79, 0x6f, 0x66, 0x66, 0x4d, 0x61, 0x78, 0x70, 0x72,
 	0x6f, 0x66, 0x69, 0x74, 0x12, 0x1b, 0x0a, 0x09, 0x6c, 0x6f, 0x61, 0x64, 0x5f, 0x64, 0x61, 0x74,
 	0x65, 0x18, 0x0d, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x6c, 0x6f, 0x61, 0x64, 0x44, 0x61, 0x74,
-	0x65, 0x22, 0x59, 0x0a, 0x11, 0x53, 0x61, 0x76, 0x65, 0x54, 0x72, 0x61, 0x64, 0x65, 0x73, 0x52,
+	0x65, 0x22, 0x2f, 0x0a, 0x10, 0x47, 0x65, 0x74, 0x54, 0x72, 0x61, 0x64, 0x65, 0x73, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1b, 0x0a, 0x09, 0x74, 0x72, 0x61, 0x64, 0x65, 0x5f, 0x69,
+	0x64, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x08, 0x74, 0x72, 0x61, 0x64, 0x65, 0x49,
+	0x64, 0x73, 0x22, 0x9c, 0x01, 0x0a, 0x11, 0x47, 0x65, 0x74, 0x54, 0x72, 0x61, 0x64, 0x65, 0x73,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x3d, 0x0a, 0x06, 0x74, 0x72, 0x61, 0x64,
+	0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x25, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x73, 0x2e, 0x47, 0x65, 0x74, 0x54, 0x72, 0x61, 0x64, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x2e, 0x54, 0x72, 0x61, 0x64, 0x65, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52,
+	0x06, 0x74, 0x72, 0x61, 0x64, 0x65, 0x73, 0x1a, 0x48, 0x0a, 0x0b, 0x54, 0x72, 0x61, 0x64, 0x65,
+	0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x23, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75,
+	0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0d, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x73,
+	0x2e, 0x54, 0x72, 0x61, 0x64, 0x65, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38,
+	0x01, 0x22, 0x59, 0x0a, 0x11, 0x53, 0x61, 0x76, 0x65, 0x54, 0x72, 0x61, 0x64, 0x65, 0x73, 0x52,
 	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x25, 0x0a, 0x06, 0x74, 0x72, 0x61, 0x64, 0x65, 0x73,
 	0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x0d, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x73, 0x2e,
 	0x54, 0x72, 0x61, 0x64, 0x65, 0x52, 0x06, 0x74, 0x72, 0x61, 0x64, 0x65, 0x73, 0x12, 0x1d, 0x0a,
@@ -979,24 +1086,28 @@ var file_protos_trades_proto_rawDesc = []byte{
 	0x74, 0x65, 0x72, 0x42, 0x79, 0x12, 0x1d, 0x0a, 0x0a, 0x6c, 0x6f, 0x67, 0x5f, 0x74, 0x72, 0x61,
 	0x64, 0x65, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x08, 0x52, 0x09, 0x6c, 0x6f, 0x67, 0x54, 0x72,
 	0x61, 0x64, 0x65, 0x73, 0x22, 0x16, 0x0a, 0x14, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x54, 0x72,
-	0x61, 0x64, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x32, 0xe9, 0x01, 0x0a,
-	0x0c, 0x54, 0x72, 0x61, 0x64, 0x65, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x45, 0x0a,
-	0x0a, 0x53, 0x61, 0x76, 0x65, 0x54, 0x72, 0x61, 0x64, 0x65, 0x73, 0x12, 0x19, 0x2e, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x73, 0x2e, 0x53, 0x61, 0x76, 0x65, 0x54, 0x72, 0x61, 0x64, 0x65, 0x73, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1a, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x73, 0x2e,
-	0x53, 0x61, 0x76, 0x65, 0x54, 0x72, 0x61, 0x64, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x22, 0x00, 0x12, 0x45, 0x0a, 0x0a, 0x4c, 0x69, 0x73, 0x74, 0x54, 0x72, 0x61, 0x64,
-	0x65, 0x73, 0x12, 0x19, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x73, 0x2e, 0x4c, 0x69, 0x73, 0x74,
-	0x54, 0x72, 0x61, 0x64, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1a, 0x2e,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x73, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x54, 0x72, 0x61, 0x64, 0x65,
-	0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x4b, 0x0a, 0x0c, 0x52,
-	0x65, 0x6d, 0x6f, 0x76, 0x65, 0x54, 0x72, 0x61, 0x64, 0x65, 0x73, 0x12, 0x1b, 0x2e, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x73, 0x2e, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x54, 0x72, 0x61, 0x64, 0x65,
-	0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1c, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
-	0x73, 0x2e, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x54, 0x72, 0x61, 0x64, 0x65, 0x73, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x42, 0x10, 0x5a, 0x0e, 0x74, 0x64, 0x70, 0x72,
-	0x6f, 0x78, 0x79, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x33,
+	0x61, 0x64, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x32, 0xad, 0x02, 0x0a,
+	0x0c, 0x54, 0x72, 0x61, 0x64, 0x65, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x42, 0x0a,
+	0x09, 0x47, 0x65, 0x74, 0x54, 0x72, 0x61, 0x64, 0x65, 0x73, 0x12, 0x18, 0x2e, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x73, 0x2e, 0x47, 0x65, 0x74, 0x54, 0x72, 0x61, 0x64, 0x65, 0x73, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x19, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x73, 0x2e, 0x47, 0x65,
+	0x74, 0x54, 0x72, 0x61, 0x64, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22,
+	0x00, 0x12, 0x45, 0x0a, 0x0a, 0x53, 0x61, 0x76, 0x65, 0x54, 0x72, 0x61, 0x64, 0x65, 0x73, 0x12,
+	0x19, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x73, 0x2e, 0x53, 0x61, 0x76, 0x65, 0x54, 0x72, 0x61,
+	0x64, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1a, 0x2e, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x73, 0x2e, 0x53, 0x61, 0x76, 0x65, 0x54, 0x72, 0x61, 0x64, 0x65, 0x73, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x45, 0x0a, 0x0a, 0x4c, 0x69, 0x73, 0x74,
+	0x54, 0x72, 0x61, 0x64, 0x65, 0x73, 0x12, 0x19, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x73, 0x2e,
+	0x4c, 0x69, 0x73, 0x74, 0x54, 0x72, 0x61, 0x64, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x1a, 0x1a, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x73, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x54,
+	0x72, 0x61, 0x64, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12,
+	0x4b, 0x0a, 0x0c, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x54, 0x72, 0x61, 0x64, 0x65, 0x73, 0x12,
+	0x1b, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x73, 0x2e, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x54,
+	0x72, 0x61, 0x64, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1c, 0x2e, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x73, 0x2e, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x54, 0x72, 0x61, 0x64,
+	0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x42, 0x10, 0x5a, 0x0e,
+	0x74, 0x64, 0x70, 0x72, 0x6f, 0x78, 0x79, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x73, 0x62, 0x06,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1011,22 +1122,25 @@ func file_protos_trades_proto_rawDescGZIP() []byte {
 	return file_protos_trades_proto_rawDescData
 }
 
-var file_protos_trades_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_protos_trades_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_protos_trades_proto_goTypes = []interface{}{
 	(*OrderBase)(nil),            // 0: protos.OrderBase
 	(*Single)(nil),               // 1: protos.Single
 	(*Spread)(nil),               // 2: protos.Spread
 	(*Order)(nil),                // 3: protos.Order
 	(*Trade)(nil),                // 4: protos.Trade
-	(*SaveTradesRequest)(nil),    // 5: protos.SaveTradesRequest
-	(*SaveTradesResponse)(nil),   // 6: protos.SaveTradesResponse
-	(*TradeOrder)(nil),           // 7: protos.TradeOrder
-	(*TradeFilter)(nil),          // 8: protos.TradeFilter
-	(*ListTradesRequest)(nil),    // 9: protos.ListTradesRequest
-	(*ListTradesResponse)(nil),   // 10: protos.ListTradesResponse
-	(*RemoveTradesRequest)(nil),  // 11: protos.RemoveTradesRequest
-	(*RemoveTradesResponse)(nil), // 12: protos.RemoveTradesResponse
-	(*structpb.Struct)(nil),      // 13: google.protobuf.Struct
+	(*GetTradesRequest)(nil),     // 5: protos.GetTradesRequest
+	(*GetTradesResponse)(nil),    // 6: protos.GetTradesResponse
+	(*SaveTradesRequest)(nil),    // 7: protos.SaveTradesRequest
+	(*SaveTradesResponse)(nil),   // 8: protos.SaveTradesResponse
+	(*TradeOrder)(nil),           // 9: protos.TradeOrder
+	(*TradeFilter)(nil),          // 10: protos.TradeFilter
+	(*ListTradesRequest)(nil),    // 11: protos.ListTradesRequest
+	(*ListTradesResponse)(nil),   // 12: protos.ListTradesResponse
+	(*RemoveTradesRequest)(nil),  // 13: protos.RemoveTradesRequest
+	(*RemoveTradesResponse)(nil), // 14: protos.RemoveTradesResponse
+	nil,                          // 15: protos.GetTradesResponse.TradesEntry
+	(*structpb.Struct)(nil),      // 16: google.protobuf.Struct
 }
 var file_protos_trades_proto_depIdxs = []int32{
 	0,  // 0: protos.Single.order_base:type_name -> protos.OrderBase
@@ -1035,22 +1149,26 @@ var file_protos_trades_proto_depIdxs = []int32{
 	1,  // 3: protos.Order.single:type_name -> protos.Single
 	2,  // 4: protos.Order.spread:type_name -> protos.Spread
 	3,  // 5: protos.Trade.orders:type_name -> protos.Order
-	13, // 6: protos.Trade.metadata:type_name -> google.protobuf.Struct
-	4,  // 7: protos.SaveTradesRequest.trades:type_name -> protos.Trade
-	8,  // 8: protos.ListTradesRequest.filter_by:type_name -> protos.TradeFilter
-	7,  // 9: protos.ListTradesRequest.order_by:type_name -> protos.TradeOrder
-	8,  // 10: protos.RemoveTradesRequest.filter_by:type_name -> protos.TradeFilter
-	5,  // 11: protos.TradeService.SaveTrades:input_type -> protos.SaveTradesRequest
-	9,  // 12: protos.TradeService.ListTrades:input_type -> protos.ListTradesRequest
-	11, // 13: protos.TradeService.RemoveTrades:input_type -> protos.RemoveTradesRequest
-	6,  // 14: protos.TradeService.SaveTrades:output_type -> protos.SaveTradesResponse
-	10, // 15: protos.TradeService.ListTrades:output_type -> protos.ListTradesResponse
-	12, // 16: protos.TradeService.RemoveTrades:output_type -> protos.RemoveTradesResponse
-	14, // [14:17] is the sub-list for method output_type
-	11, // [11:14] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	16, // 6: protos.Trade.metadata:type_name -> google.protobuf.Struct
+	15, // 7: protos.GetTradesResponse.trades:type_name -> protos.GetTradesResponse.TradesEntry
+	4,  // 8: protos.SaveTradesRequest.trades:type_name -> protos.Trade
+	10, // 9: protos.ListTradesRequest.filter_by:type_name -> protos.TradeFilter
+	9,  // 10: protos.ListTradesRequest.order_by:type_name -> protos.TradeOrder
+	10, // 11: protos.RemoveTradesRequest.filter_by:type_name -> protos.TradeFilter
+	4,  // 12: protos.GetTradesResponse.TradesEntry.value:type_name -> protos.Trade
+	5,  // 13: protos.TradeService.GetTrades:input_type -> protos.GetTradesRequest
+	7,  // 14: protos.TradeService.SaveTrades:input_type -> protos.SaveTradesRequest
+	11, // 15: protos.TradeService.ListTrades:input_type -> protos.ListTradesRequest
+	13, // 16: protos.TradeService.RemoveTrades:input_type -> protos.RemoveTradesRequest
+	6,  // 17: protos.TradeService.GetTrades:output_type -> protos.GetTradesResponse
+	8,  // 18: protos.TradeService.SaveTrades:output_type -> protos.SaveTradesResponse
+	12, // 19: protos.TradeService.ListTrades:output_type -> protos.ListTradesResponse
+	14, // 20: protos.TradeService.RemoveTrades:output_type -> protos.RemoveTradesResponse
+	17, // [17:21] is the sub-list for method output_type
+	13, // [13:17] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_protos_trades_proto_init() }
@@ -1120,7 +1238,7 @@ func file_protos_trades_proto_init() {
 			}
 		}
 		file_protos_trades_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SaveTradesRequest); i {
+			switch v := v.(*GetTradesRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1132,7 +1250,7 @@ func file_protos_trades_proto_init() {
 			}
 		}
 		file_protos_trades_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SaveTradesResponse); i {
+			switch v := v.(*GetTradesResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1144,7 +1262,7 @@ func file_protos_trades_proto_init() {
 			}
 		}
 		file_protos_trades_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*TradeOrder); i {
+			switch v := v.(*SaveTradesRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1156,7 +1274,7 @@ func file_protos_trades_proto_init() {
 			}
 		}
 		file_protos_trades_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*TradeFilter); i {
+			switch v := v.(*SaveTradesResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1168,7 +1286,7 @@ func file_protos_trades_proto_init() {
 			}
 		}
 		file_protos_trades_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListTradesRequest); i {
+			switch v := v.(*TradeOrder); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1180,7 +1298,7 @@ func file_protos_trades_proto_init() {
 			}
 		}
 		file_protos_trades_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListTradesResponse); i {
+			switch v := v.(*TradeFilter); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1192,7 +1310,7 @@ func file_protos_trades_proto_init() {
 			}
 		}
 		file_protos_trades_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RemoveTradesRequest); i {
+			switch v := v.(*ListTradesRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1204,6 +1322,30 @@ func file_protos_trades_proto_init() {
 			}
 		}
 		file_protos_trades_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListTradesResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_protos_trades_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RemoveTradesRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_protos_trades_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*RemoveTradesResponse); i {
 			case 0:
 				return &v.state
@@ -1226,7 +1368,7 @@ func file_protos_trades_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_protos_trades_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

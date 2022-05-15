@@ -69,6 +69,7 @@ func getTradeDB() *db.TradeDB {
 	tradesdir := path.Join(tdbroot, "trades")
 	indexdb, err := gorm.Open(sqlite.Open(indexfile), &gorm.Config{})
 	if err != nil {
+		log.Println("Cannot open/create Trade DB.  Is the tradedb dir missing?")
 		log.Panic(err)
 	}
 	opt := badger.DefaultOptions(tradesdir)

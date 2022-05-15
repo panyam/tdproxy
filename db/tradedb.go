@@ -2,7 +2,9 @@ package db
 
 import (
 	"encoding/json"
+	"github.com/panyam/goutils/utils"
 	"log"
+	"sync"
 	// "errors"
 	badger "github.com/dgraph-io/badger/v3"
 	"gorm.io/gorm"
@@ -24,6 +26,45 @@ func NewTradeDB(db *badger.DB, indexdb *gorm.DB) *TradeDB {
 
 func (tdb *TradeDB) Close() (err error) {
 	tdb.db.Close()
+	return
+}
+
+func (tdb *TradeDB) GetTradeById(id string) (trade *models.Trade, err error) {
+	txn := tdb.db.NewTransaction(true)
+	defer txn.Discard()
+	item, err := txn.Get([]byte(id))
+	if err != nil {
+		return nil, err
+	}
+	err = item.Value(func(val []byte) error {
+		tradejson, err := utils.JsonDecodeBytes(val)
+		if err != nil {
+			return err
+		}
+		trade = &models.Trade{}
+		if err := trade.FromJson(tradejson.(utils.StringMap)); err != nil {
+			return err
+		}
+		return nil
+	})
+	return
+}
+
+func (tdb *TradeDB) GetTrades(trade_ids []string) (trades map[string]*models.Trade, err error) {
+	// Now also load their data
+	var wg sync.WaitGroup
+	trades = make(map[string]*models.Trade)
+	for _, trade_id := range trade_ids {
+		wg.Add(1)
+		go func(trade_id string) {
+			defer wg.Done()
+			trade, err := tdb.GetTradeById(trade_id)
+			if err == nil {
+				trades[trade_id] = trade
+			}
+		}(trade_id)
+	}
+	wg.Wait()
 	return
 }
 

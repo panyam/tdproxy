@@ -42,6 +42,7 @@ func TradeFromProto(trade *protos.Trade) (out *models.Trade) {
 		PayoffExpectedLoss: trade.PayoffExpectedLoss,
 		PayoffGainProb:     trade.PayoffGainProb,
 		PayoffBPE:          trade.PayoffBpe,
+		PayoffMaxProfit:    trade.PayoffMaxprofit,
 		Orders:             OrdersFromProto(trade.Orders),
 	}
 	return
@@ -58,6 +59,7 @@ func TradeToProto(trade *models.Trade) (out *protos.Trade) {
 		PayoffExpectedLoss: trade.PayoffExpectedLoss,
 		PayoffGainProb:     trade.PayoffGainProb,
 		PayoffBpe:          trade.PayoffBPE,
+		PayoffMaxprofit:    trade.PayoffMaxProfit,
 		Orders:             OrdersToProto(trade.Orders),
 	}
 	return

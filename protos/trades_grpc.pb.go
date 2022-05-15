@@ -18,6 +18,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TradeServiceClient interface {
+	GetTrades(ctx context.Context, in *GetTradesRequest, opts ...grpc.CallOption) (*GetTradesResponse, error)
 	SaveTrades(ctx context.Context, in *SaveTradesRequest, opts ...grpc.CallOption) (*SaveTradesResponse, error)
 	ListTrades(ctx context.Context, in *ListTradesRequest, opts ...grpc.CallOption) (*ListTradesResponse, error)
 	RemoveTrades(ctx context.Context, in *RemoveTradesRequest, opts ...grpc.CallOption) (*RemoveTradesResponse, error)
@@ -29,6 +30,15 @@ type tradeServiceClient struct {
 
 func NewTradeServiceClient(cc grpc.ClientConnInterface) TradeServiceClient {
 	return &tradeServiceClient{cc}
+}
+
+func (c *tradeServiceClient) GetTrades(ctx context.Context, in *GetTradesRequest, opts ...grpc.CallOption) (*GetTradesResponse, error) {
+	out := new(GetTradesResponse)
+	err := c.cc.Invoke(ctx, "/protos.TradeService/GetTrades", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *tradeServiceClient) SaveTrades(ctx context.Context, in *SaveTradesRequest, opts ...grpc.CallOption) (*SaveTradesResponse, error) {
@@ -62,6 +72,7 @@ func (c *tradeServiceClient) RemoveTrades(ctx context.Context, in *RemoveTradesR
 // All implementations must embed UnimplementedTradeServiceServer
 // for forward compatibility
 type TradeServiceServer interface {
+	GetTrades(context.Context, *GetTradesRequest) (*GetTradesResponse, error)
 	SaveTrades(context.Context, *SaveTradesRequest) (*SaveTradesResponse, error)
 	ListTrades(context.Context, *ListTradesRequest) (*ListTradesResponse, error)
 	RemoveTrades(context.Context, *RemoveTradesRequest) (*RemoveTradesResponse, error)
@@ -72,6 +83,9 @@ type TradeServiceServer interface {
 type UnimplementedTradeServiceServer struct {
 }
 
+func (UnimplementedTradeServiceServer) GetTrades(context.Context, *GetTradesRequest) (*GetTradesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTrades not implemented")
+}
 func (UnimplementedTradeServiceServer) SaveTrades(context.Context, *SaveTradesRequest) (*SaveTradesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SaveTrades not implemented")
 }
@@ -92,6 +106,24 @@ type UnsafeTradeServiceServer interface {
 
 func RegisterTradeServiceServer(s grpc.ServiceRegistrar, srv TradeServiceServer) {
 	s.RegisterService(&TradeService_ServiceDesc, srv)
+}
+
+func _TradeService_GetTrades_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTradesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TradeServiceServer).GetTrades(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/protos.TradeService/GetTrades",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TradeServiceServer).GetTrades(ctx, req.(*GetTradesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _TradeService_SaveTrades_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -155,6 +187,10 @@ var TradeService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "protos.TradeService",
 	HandlerType: (*TradeServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetTrades",
+			Handler:    _TradeService_GetTrades_Handler,
+		},
 		{
 			MethodName: "SaveTrades",
 			Handler:    _TradeService_SaveTrades_Handler,

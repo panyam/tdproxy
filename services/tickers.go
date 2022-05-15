@@ -18,7 +18,8 @@ type TickerService struct {
 }
 
 func (s *TickerService) GetTickers(ctx context.Context, request *protos.GetTickersRequest) (*protos.GetTickersResponse, error) {
-	if !s.AuthStore.EnsureAuthenticated(s.AuthStore.LastAuth().ClientId) {
+	lastAuth := s.AuthStore.LastAuth()
+	if lastAuth == nil || !s.AuthStore.EnsureAuthenticated(lastAuth.ClientId) {
 		return nil, errors.New("Not authenticated.  Call StartLogin first")
 	}
 	refresh_type := int32(0)

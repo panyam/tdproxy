@@ -12,6 +12,17 @@ type TradeService struct {
 	TradeDB *db.TradeDB
 }
 
+func (s *TradeService) GetTrades(ctx context.Context, request *protos.GetTradesRequest) (resp *protos.GetTradesResponse, err error) {
+	trades, err := s.TradeDB.GetTrades(request.TradeIds)
+	resp = &protos.GetTradesResponse{
+		Trades: make(map[string]*protos.Trade),
+	}
+	for trade_id, trade := range trades {
+		resp.Trades[trade_id] = TradeToProto(trade)
+	}
+	return resp, nil
+}
+
 func (s *TradeService) SaveTrades(ctx context.Context, request *protos.SaveTradesRequest) (resp *protos.SaveTradesResponse, err error) {
 	for _, trade := range request.Trades {
 		if request.LogTrades {

@@ -51,9 +51,18 @@ message Trade {
 }
 
 service TradeService {
+  rpc GetTrades(GetTradesRequest) returns (GetTradesResponse) {}
   rpc SaveTrades(SaveTradesRequest) returns (SaveTradesResponse) {}
   rpc ListTrades(ListTradesRequest) returns (ListTradesResponse) {}
   rpc RemoveTrades(RemoveTradesRequest) returns (RemoveTradesResponse) {}
+}
+
+message GetTradesRequest {
+  repeated string trade_ids = 1;
+}
+
+message GetTradesResponse {
+  map<string, Trade> trades = 1;
 }
 
 message SaveTradesRequest {
