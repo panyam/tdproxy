@@ -19,7 +19,7 @@ source env/bin/activate
 pip install -r dev_requirements
 ```
 
-### Generate bindings
+### Generate bindings (not required if you are not changing golang code)
 
 ```
 # Needed to get the pypslite package to generate files into
