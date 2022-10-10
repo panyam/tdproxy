@@ -6,23 +6,13 @@ import (
 	"time"
 )
 
-type AuthTokenJsonField struct {
-	*utils.Json
-	AuthClientId string `gorm:"primaryKey"`
-}
-
-type UserPrincipalsJsonField struct {
-	*utils.Json
-	AuthClientId string `gorm:"primaryKey"`
-}
-
 type Auth struct {
 	ClientId              string `gorm:"primaryKey"`
 	CallbackUrl           string
 	ExpiresAt             time.Time
 	RefreshTokenExpiresAt time.Time
-	AuthToken             JsonField `gorm:"type:text"` // AuthTokenJsonField
-	UserPrincipals        JsonField `gorm:"type:text"` // UserPrincipalsJsonField
+	AuthToken             JsonField `gorm:"type:text"`
+	UserPrincipals        JsonField `gorm:"type:text"`
 }
 
 func (a *Auth) ToJson() utils.StringMap {
