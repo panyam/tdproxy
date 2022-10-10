@@ -11,10 +11,10 @@ import (
 )
 
 type Socket struct {
-	TDClient   *Client
-	wsConn     *websocket.Conn
-	waitGroup  sync.WaitGroup
-	is_running bool
+	TDClient  *Client
+	wsConn    *websocket.Conn
+	waitGroup sync.WaitGroup
+	isRunning bool
 
 	// Time allowed to write a message to the peer.
 	writeWaitTime time.Duration
@@ -63,7 +63,7 @@ func (s *Socket) ReaderChannel() chan utils.StringMap {
  * Returns whether the socket reader/writer loops are running.
  */
 func (s *Socket) IsRunning() bool {
-	return s.is_running
+	return s.isRunning
 }
 
 /**
@@ -71,7 +71,7 @@ func (s *Socket) IsRunning() bool {
  * writers are not running, false is returned.
  */
 func (s *Socket) SendRequest(req utils.StringMap) bool {
-	if !s.is_running {
+	if !s.isRunning {
 		log.Println("Server is not running")
 		return false
 	}
@@ -196,11 +196,11 @@ func (s *Socket) StartConnection() error {
 		return err
 	}
 	s.wsConn = c
-	s.is_running = true
+	s.isRunning = true
 	s.waitGroup.Add(2)
 	// Start the writer and readers
-	go s.start_reader()
-	go s.start_writer()
+	go s.startReader()
+	go s.startWriter()
 	return nil
 }
 
@@ -209,11 +209,11 @@ func (s *Socket) StartConnection() error {
  */
 func (s *Socket) WaitForFinish() {
 	s.waitGroup.Wait()
-	s.is_running = false
+	s.isRunning = false
 	s.wsConn = nil
 }
 
-func (s *Socket) start_reader() error {
+func (s *Socket) startReader() error {
 	// Start reader goroutine
 	// defer c.Close()
 	s.wsConn.SetReadDeadline(time.Now().Add(s.readWaitTime))
@@ -254,7 +254,7 @@ func (s *Socket) start_reader() error {
 }
 
 // Start writer goroutine
-func (s *Socket) start_writer() error {
+func (s *Socket) startWriter() error {
 	ticker := time.NewTicker((s.readWaitTime * 9) / 10)
 	defer func() {
 		ticker.Stop()
