@@ -8,6 +8,7 @@ import (
 	"github.com/panyam/pslite/cli"
 	pslconfig "github.com/panyam/pslite/config"
 	"google.golang.org/grpc"
+	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"log"
@@ -17,7 +18,6 @@ import (
 	"strings"
 	"tdproxy/config"
 	"tdproxy/db"
-	"tdproxy/db/filedb"
 	"tdproxy/db/gormdb"
 	"tdproxy/protos"
 	svc "tdproxy/services"
@@ -37,7 +37,7 @@ var (
 	callback_pkey     = flag.String("callback_pkey", "./tdclient/server.key", "Private key file for SSL Callback handler")
 	topic_endpoint    = flag.String("topic_endpoint", fmt.Sprintf("%d", pslconfig.DefaultServerPort()), "End point where topics can be published and subscribed to")
 	topics_folder     = flag.String("topics_folder", "~/.tdroot/topics", "End point where topics can be published and subscribed to")
-	db_endpoint       = flag.String("db_endpoint", "sqlite://~/.tdroot/sqlite.db", "Endpoint of DB to use")
+	db_endpoint       = flag.String("db_endpoint", "postgres://postgres:docker@localhost:5432/tdproxydb", "Endpoint of DB backing tdproxy shard targets.  Supported - sqlite eg (sqlite://~/.tdproxy/sqlite.db) or postgres eg (postgres://user:pass@localhost:5432/dbname)")
 	trade_db_endpoint = flag.String("tradesdb_endpoint", "~/.tdroot/trades", "Endpoint of trades DB")
 )
 
@@ -80,27 +80,6 @@ func getTradeDB() *db.TradeDB {
 	return db.NewTradeDB(tradedb, indexdb)
 }
 
-func getDBs() (authdb db.AuthDB, tickerdb db.TickerDB, chaindb db.ChainDB) {
-	if strings.HasPrefix(*db_endpoint, "file://") {
-		dbpath := utils.ExpandUserPath((*db_endpoint)[len("file://"):])
-		authdb = filedb.NewAuthDB(dbpath)
-		chaindb = filedb.NewChainDB(dbpath)
-		tickerdb = filedb.NewTickerDB(dbpath)
-	} else if strings.HasPrefix(*db_endpoint, "sqlite://") {
-		dbpath := utils.ExpandUserPath((*db_endpoint)[len("sqlite://"):])
-		db, err := gorm.Open(sqlite.Open(dbpath), &gorm.Config{})
-		if err != nil {
-			panic("failed to connect database")
-		}
-		authdb = gormdb.NewAuthDB(db)
-		chaindb = gormdb.NewChainDB(db)
-		tickerdb = gormdb.NewTickerDB(db)
-	} else {
-		log.Panic("Invalid db_endpoint: ", *db_endpoint)
-	}
-	return authdb, tickerdb, chaindb
-}
-
 func main() {
 	flag.Parse()
 	authdb, tickerdb, chaindb := getDBs()
@@ -139,4 +118,29 @@ func main() {
 	}
 	grpcServer.Serve(lis)
 	defer tradedb.Close()
+}
+
+func OpenDB(db_endpoint string) (db *gorm.DB, err error) {
+	var dbpath string
+	if strings.HasPrefix(db_endpoint, "sqlite://") {
+		dbpath = utils.ExpandUserPath((db_endpoint)[len("sqlite://"):])
+		db, err = gorm.Open(sqlite.Open(dbpath), &gorm.Config{})
+	} else if strings.HasPrefix(db_endpoint, "postgres://") {
+		db, err = gorm.Open(postgres.Open(db_endpoint), &gorm.Config{})
+	}
+	if err != nil {
+		log.Printf("Cannot connect DB: %s", db_endpoint)
+	}
+	return
+}
+
+func getDBs() (authdb db.AuthDB, tickerdb db.TickerDB, chaindb db.ChainDB) {
+	gdb, err := OpenDB(*db_endpoint)
+	if err != nil {
+		panic(err)
+	}
+	authdb = gormdb.NewAuthDB(gdb)
+	chaindb = gormdb.NewChainDB(gdb)
+	tickerdb = gormdb.NewTickerDB(gdb)
+	return authdb, tickerdb, chaindb
 }
