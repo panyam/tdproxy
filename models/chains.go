@@ -17,7 +17,7 @@ type ChainInfo struct {
 type Chain struct {
 	Symbol          string `gorm:"primaryKey"`
 	DateString      string `gorm:"primaryKey"`
-	IsCall          bool   `gorm:"primaryKey"`
+	IsCall          bool   `gorm:"primaryKey" gorm:"type:boolean; column:is_call"`
 	LastRefreshedAt time.Time
 	Options         []*Option `gorm:"-"` // dont read/write this
 }

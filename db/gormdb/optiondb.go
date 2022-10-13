@@ -3,6 +3,7 @@ package gormdb
 import (
 	"errors"
 	"gorm.io/gorm"
+	// "log"
 	"tdproxy/models"
 )
 
@@ -45,7 +46,7 @@ func (db *OptionDB) GetOptions(is_call bool, symbol string, date string) ([]*mod
  * Save a particular option.
  */
 func (db *OptionDB) SaveOption(option *models.Option) (err error) {
-	result := db.db.Session(&gorm.Session{FullSaveAssociations: true}).Updates(option)
+	result := db.db.Session(&gorm.Session{FullSaveAssociations: true}).Where("symbol = ? AND date_string = ? AND is_call = ? AND price_string = ?", option.Symbol, option.DateString, option.IsCall, option.PriceString).Updates(option)
 	err = result.Error
 	if err == nil && result.RowsAffected == 0 {
 		err = db.db.Create(option).Error

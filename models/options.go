@@ -18,7 +18,7 @@ type OptionJsonField struct {
 type Option struct {
 	Symbol       string `gorm:"primaryKey" gorm:"index:ByCallSymbolDate,priority:1"`
 	DateString   string `gorm:"primaryKey" gorm:"index:ByCallSymbolDate,priority:2"`
-	IsCall       bool   `gorm:"primaryKey" gorm:"index:ByCallSymbolDate,priority:3"`
+	IsCall       bool   `gorm:"primaryKey" gorm:"index:ByCallSymbolDate,priority:3" gorm:"type:boolean; column:is_call"`
 	PriceString  string `gorm:"primaryKey"`
 	StrikePrice  float64
 	AskPrice     float64
