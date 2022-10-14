@@ -23,6 +23,7 @@ func (s *AuthService) AddAuthToken(ctx context.Context, request *protos.AddAuthT
 func (s *AuthService) StartLogin(ctx context.Context, request *protos.StartAuthRequest) (*protos.StartAuthResponse, error) {
 	auth, err := s.AuthStore.EnsureAuth(request.ClientId, request.CallbackUrl)
 	if err != nil {
+		log.Println("Login Error: ", err)
 		return nil, err
 	}
 	s.TDClient.Auth = auth

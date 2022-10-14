@@ -81,6 +81,7 @@ func (td *Client) GetChainInfo(symbol string, refresh_type int32) (*models.Chain
 	}
 	chain_info, err := td.chain_db.GetChainInfo(symbol)
 	if err != nil {
+		log.Println("Error getting chain info: ", symbol, err)
 		return nil, err
 	}
 	now := time.Now().UTC()

@@ -17,6 +17,9 @@ type ChainService struct {
 }
 
 func (s *ChainService) GetChainInfo(req *protos.GetChainInfoRequest, stream protos.ChainService_GetChainInfoServer) error {
+	if !s.AuthStore.EnsureAuthenticated(s.AuthStore.LastAuth().ClientId) {
+		return errors.New("Not authenticated.  Call StartLogin first")
+	}
 	refresh_type := int32(0)
 	if req.RefreshType != nil {
 		refresh_type = *req.RefreshType
